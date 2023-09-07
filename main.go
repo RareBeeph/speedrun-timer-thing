@@ -13,8 +13,8 @@ import (
 )
 
 func main() {
-	a := app.New()
-	w := a.NewWindow("Hello World")
+	app := app.New()
+	window := app.NewWindow("Hello World")
 
 	layout := layout.NewGridLayout(1)
 	timer := widget.NewLabel("00:00:00.000")
@@ -26,8 +26,8 @@ func main() {
 	// i should probably just store the total unpaused duration instead of this but i'll worry about that later
 	var pauseSegments []pauseSegment
 
-	w.SetContent(content)
-	w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
+	window.SetContent(content)
+	window.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
 		helloworld.Text += string(k.Name)
 		helloworld.Refresh()
 
@@ -89,7 +89,7 @@ func main() {
 		}
 	}()
 
-	w.ShowAndRun()
+	window.ShowAndRun()
 }
 
 func zeroPad(in string, length int) string {
