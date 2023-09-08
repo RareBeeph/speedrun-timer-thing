@@ -38,22 +38,21 @@ func main() {
 	window.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
 		log.Print(k.Name)
 
-		// TODO: handle restarting/clearing/unpausing the timer
 		if k.Name == fyne.KeySpace {
-			if !timer.Running() {
+			if timer.Idle() {
 				timer.Start()
 				return
-			}
-
-			if timer.Paused() {
+			} else if timer.Paused() {
 				timer.Resume()
-			} else if !timer.Paused() {
+			} else if timer.Running() {
 				timer.Pause()
 			}
 		}
 
 		if k.Name == fyne.KeyBackspace {
-			if timer.Running() {
+			if timer.Stopped() {
+				timer.Restart()
+			} else if timer.Running() || timer.Paused() {
 				timer.Stop()
 			}
 		}
