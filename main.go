@@ -23,13 +23,28 @@ func init() {
 
 func main() {
 	var (
-		app        = app.New()
-		window     = app.NewWindow("Hello World")
-		layout     = layout.NewGridLayout(1)
-		timerText  = binding.NewString()
-		timerLabel = widget.NewLabelWithData(timerText)
-		content    = container.New(layout, timerLabel)
-		timer      = &Timer{}
+		app           = app.New()
+		window        = app.NewWindow("Hello World")
+		layout1       = layout.NewGridLayout(1)
+		timerText     = binding.NewString()
+		timerLabel    = widget.NewLabelWithData(timerText)
+		testDiffLabel = widget.NewLabel("-0.1")
+		testTimeLabel = widget.NewLabel("02:33.983")
+		titleBarLabel = widget.NewLabel("Fake Game Title")
+		timer         = &Timer{}
+	)
+
+	testDiffLabel.Alignment = fyne.TextAlignTrailing
+	testTimeLabel.Alignment = fyne.TextAlignTrailing
+	titleBarLabel.Alignment = fyne.TextAlignCenter
+	timerLabel.Alignment = fyne.TextAlignCenter
+
+	var (
+		splitLabel1 = container.New(layout.NewGridLayout(3), widget.NewLabel("Fake Split Label"), testDiffLabel, testTimeLabel)
+		splitLabel2 = container.New(layout.NewGridLayout(3), widget.NewLabel("Fake Split 2"), testDiffLabel, testTimeLabel)
+		splitLabels = container.New(layout1, splitLabel1, splitLabel2)
+		scrollable  = container.NewVScroll(splitLabels)
+		content     = container.New(layout1, titleBarLabel, scrollable, timerLabel)
 	)
 
 	timerText.Set(timer.String())
