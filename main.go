@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"os"
@@ -19,6 +20,10 @@ import (
 func init() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
+	if _, themeSet := os.LookupEnv("FYNE_THEME"); !themeSet {
+		os.Setenv("FYNE_THEME", "dark")
+	}
 }
 
 func main() {
@@ -81,6 +86,8 @@ func main() {
 			timerText.Set(timer.String())
 		}
 	}(ticker)
+
+	app.Settings().SetTheme(theme.DefaultTheme())
 
 	// Fixed size mode enforces a floating window by default, which we want,
 	// but we want that size to be saved with the run data and not hardcoded
