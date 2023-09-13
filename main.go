@@ -82,5 +82,10 @@ func main() {
 		}
 	}(ticker)
 
+	// Fixed size mode enforces a floating window by default, which we want,
+	// but we want that size to be saved with the run data and not hardcoded
+	// window.SetFixedSize(true)
+	// window.Resize(fyne.NewSize(window.Canvas().Size().Width, 720))
+
 	window.ShowAndRun()
 }

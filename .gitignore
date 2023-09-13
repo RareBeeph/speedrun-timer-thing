@@ -26,3 +26,6 @@ go.work
 
 # End of https://www.toptal.com/developers/gitignore/api/go
 speedruntimer
+
+# github.com/silenceper/gowatch output uses dirname and not package name
+speedrun-timer-thing
