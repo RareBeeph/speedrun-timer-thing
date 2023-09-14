@@ -117,14 +117,22 @@ func (t *Timer) Stopped() bool {
 }
 
 func (t *Timer) String() string {
+	return StringifyMilliseconds(t.Milliseconds())
+}
+
+func (t *Timer) Milliseconds() int64 {
 	totalTime := t.ballast.Milliseconds()
 	if t.Running() {
 		totalTime += time.Since(*t.start).Milliseconds()
 	}
 
-	out := fmt.Sprintf("%02d:%02d.%03d", totalTime/60000%60, totalTime/1000%60, totalTime%1000)
-	if totalTime >= 3600000 {
-		out = fmt.Sprintf("%02d:%s", totalTime/3600000, out)
+	return totalTime
+}
+
+func StringifyMilliseconds(d int64) string {
+	out := fmt.Sprintf("%02d:%02d.%03d", d/60000%60, d/1000%60, d%1000)
+	if d >= 3600000 {
+		out = fmt.Sprintf("%02d:%s", d/3600000, out)
 	}
 	return out
 }
