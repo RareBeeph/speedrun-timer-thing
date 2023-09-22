@@ -1,45 +1,90 @@
 package main
 
-import "time"
+import (
+	"log"
+	"time"
+)
 
 type SplitHandler struct {
-	Splits []Split
-	Index  int
+	splits []Split
+	index  int
+}
+
+/*
+	"State machine" transition table:
+
+					Split()			Restart()
+				  -----------------------------
+	IsIdle        | IsActive_1    |	IsIdle
+	...			  | ...           | ...
+	IsActive_n	  |	IsActive_(n+1)|	IsIdle
+	...			  | ...           | ...
+	IsActive_(L-1)|	IsFinished	  |	IsIdle
+	IsFinished	  |	IsFinished	  |	IsIdle
+
+
+	The number of splits must only be updated while idle,
+	since it determines the number of non-idle states
+*/
+
+func (h *SplitHandler) SetSplits(s []Split) {
+	if !h.IsIdle() {
+		log.Println("Attempted to manually set splits while not idle. Operation not performed.")
+		return
+	}
+	h.splits = s
+}
+
+func (h *SplitHandler) GetSplits() []Split {
+	return h.splits
+}
+
+func (h *SplitHandler) IsIdle() bool {
+	// It is possible for the timer to not be idle, but the split handler to be.
+	// This is counterintuitive, but doesn't break any current logic.
+	// Still, perhaps some redundancy should be in order here.
+	return h.index == 0
+}
+
+func (h *SplitHandler) IsActive() bool {
+	return h.index > 0 && h.index < len(h.splits)
+}
+
+func (h *SplitHandler) IsFinished() bool {
+	return h.index >= len(h.splits)
 }
 
 func (h *SplitHandler) Split(time time.Duration) {
-	if h.Index >= len(h.Splits) {
-		// avoid indexing oob if we're past the end of the list
-		// consider returning some sort of signal in this case
+	if h.IsFinished() {
 		return
 	}
 
-	h.Splits[h.Index].TimeInActiveRun = time
+	h.splits[h.index].TimeInActiveRun = time
 
-	// untested code
-	segmentTime := h.Splits[h.Index].TimeInActiveRun
-	if h.Index != 0 {
-		segmentTime -= h.Splits[h.Index-1].TimeInActiveRun
+	// TODO: this is currently untested code
+	segmentTime := h.splits[h.index].TimeInActiveRun
+	if h.index != 0 {
+		segmentTime -= h.splits[h.index-1].TimeInActiveRun
 	}
-	if segmentTime < h.Splits[h.Index].BestSegment {
-		h.Splits[h.Index].BestSegment = segmentTime
+	if segmentTime < h.splits[h.index].BestSegment {
+		h.splits[h.index].BestSegment = segmentTime
 	}
 
-	h.Index++
+	h.index++
 }
 
 func (h *SplitHandler) Restart() {
-	for i := range h.Splits {
-		if h.Index >= len(h.Splits) && h.Splits[len(h.Splits)-1].TimeInActiveRun < h.Splits[len(h.Splits)-1].TimeInPB {
-			h.Splits[i].TimeInPB = h.Splits[i].TimeInActiveRun
+	for i := range h.splits {
+		if h.IsFinished() && h.splits[len(h.splits)-1].TimeInActiveRun < h.splits[len(h.splits)-1].TimeInPB {
+			h.splits[i].TimeInPB = h.splits[i].TimeInActiveRun
 		}
-		h.Splits[i].TimeInActiveRun = time.Duration(0)
+		h.splits[i].TimeInActiveRun = time.Duration(0)
 	}
-	h.Index = 0
+	h.index = 0
 }
 
 func (h *SplitHandler) GetTime(splitIdx int) time.Duration {
-	s := h.Splits[splitIdx]
+	s := h.splits[splitIdx]
 	if s.TimeInActiveRun.Milliseconds() == time.Duration(0).Milliseconds() {
 		return s.TimeInPB
 	} else {
