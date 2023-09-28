@@ -3,6 +3,9 @@ package main
 import (
 	"time"
 
+	"speedruntimer/splitter"
+	"speedruntimer/timer"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
@@ -10,7 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func ArrangeMainUI(timerLabel *widget.Label, splitHandler *SplitHandler) (*widget.Table, *fyne.Container) {
+func ArrangeMainUI(timerLabel *widget.Label, splitHandler *splitter.SplitHandler) (*fyne.Container, *fyne.Container) {
 	var (
 		titleBarLabel = widget.NewLabel("Fake Game Title")
 	)
@@ -18,36 +21,31 @@ func ArrangeMainUI(timerLabel *widget.Label, splitHandler *SplitHandler) (*widge
 	timerLabel.Alignment = fyne.TextAlignCenter
 	titleBarLabel.Alignment = fyne.TextAlignCenter
 
-	splitsTable := widget.NewTable(
-		func() (int, int) {
-			return len(splitHandler.GetSplits()), 3
-		},
-		func() fyne.CanvasObject {
-			return widget.NewLabel("long enough content")
-		},
-		func(i widget.TableCellID, o fyne.CanvasObject) {
-			thisLabel := o.(*widget.Label)
-			if i.Col == 0 {
-				thisLabel.SetText(splitHandler.GetSplits()[i.Row].Name)
-			} else if i.Col == 1 {
-				thisLabel.Alignment = fyne.TextAlignTrailing
-				thisLabel.SetText("-")
-			} else if i.Col == 2 {
-				thisLabel.Alignment = fyne.TextAlignTrailing
-				thisLabel.SetText(StringifyMilliseconds(splitHandler.GetTime(i.Row).Milliseconds()))
-			}
-		},
-	)
-
-	splitHandler.SetSplits([]Split{
+	splitHandler.SetSplits([]splitter.Split{
 		{Name: "Fake Split 1", TimeInPB: time.Duration(154500000000), BestSegment: time.Duration(153983000000)},
 		{Name: "Fake Split 2", TimeInPB: time.Duration(400000000000), BestSegment: time.Duration(398000000000)},
 	})
 
+	splitsTable := splitTableFromHandler(splitHandler)
+
 	return splitsTable, container.New(layout.NewGridLayout(1), titleBarLabel, splitsTable, timerLabel)
 }
 
-func HandleKeyInput(timer *Timer, splitHandler *SplitHandler, splitsTable *widget.Table) func(*fyne.KeyEvent) {
+func splitTableFromHandler(splitHandler *splitter.SplitHandler) (splitsTable *fyne.Container) {
+	splitsTable = container.New(layout.NewVBoxLayout())
+	for i, s := range splitHandler.GetSplits() {
+		splitRow := container.New(layout.NewHBoxLayout(),
+			widget.NewLabel(s.Name),
+			layout.NewSpacer(),
+			widget.NewLabel("-"),
+			layout.NewSpacer(),
+			widget.NewLabel(timer.StringifyMilliseconds(splitHandler.GetTime(i).Milliseconds())))
+		splitsTable.Add(splitRow)
+	}
+	return splitsTable
+}
+
+func HandleKeyInput(timer *timer.Timer, splitHandler *splitter.SplitHandler, splitsTable *fyne.Container) func(*fyne.KeyEvent) {
 	return func(k *fyne.KeyEvent) {
 		log.Print(k.Name)
 
@@ -66,6 +64,8 @@ func HandleKeyInput(timer *Timer, splitHandler *SplitHandler, splitsTable *widge
 			if timer.Stopped() {
 				timer.Restart()
 				splitHandler.Restart()
+				// Scuffed replacement for UpdateItem callback:
+				splitsTable.Objects = splitTableFromHandler(splitHandler).Objects
 				splitsTable.Refresh()
 			} else if timer.Running() || timer.Paused() {
 				timer.Stop()
@@ -79,6 +79,7 @@ func HandleKeyInput(timer *Timer, splitHandler *SplitHandler, splitsTable *widge
 			if splitHandler.IsFinished() {
 				timer.Stop()
 			}
+			splitsTable.Objects = splitTableFromHandler(splitHandler).Objects
 			splitsTable.Refresh()
 		}
 	}

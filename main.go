@@ -13,6 +13,9 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	"speedruntimer/splitter"
+	"speedruntimer/timer"
 )
 
 func init() {
@@ -31,8 +34,8 @@ func main() {
 	)
 
 	var (
-		timer        = &Timer{}
-		splitHandler = &SplitHandler{}
+		timer        = &timer.Timer{}
+		splitHandler = &splitter.SplitHandler{}
 		timerText    = binding.NewString()
 		timerLabel   = widget.NewLabelWithData(timerText)
 	)
