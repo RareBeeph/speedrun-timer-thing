@@ -54,40 +54,28 @@ func (h *SplitHandler) IsFinished() bool {
 	return h.index >= len(h.splits)
 }
 
-func (h *SplitHandler) Split(time time.Duration) {
+func (h *SplitHandler) Split(at time.Duration) {
 	if h.IsFinished() {
 		return
 	}
 
-	h.splits[h.index].TimeInActiveRun = time
+	h.splits[h.index].ActiveRunTime = at
 
-	// TODO: this is currently untested code
-	segmentTime := h.splits[h.index].TimeInActiveRun
-	if h.index != 0 {
-		segmentTime -= h.splits[h.index-1].TimeInActiveRun
+	prev := time.Duration(0)
+	if h.index > 0 {
+		prev = h.splits[h.index-1].ActiveRunTime
 	}
-	if segmentTime < h.splits[h.index].BestSegment {
-		h.splits[h.index].BestSegment = segmentTime
-	}
+	h.splits[h.index].Split(at, prev)
 
 	h.index++
 }
 
 func (h *SplitHandler) Restart() {
+	// h.IsFinished() is currently redundant here, but it reads better
+	isPB := h.IsFinished() && h.splits[len(h.splits)-1].IsGreen()
 	for i := range h.splits {
-		if h.IsFinished() && h.splits[len(h.splits)-1].TimeInActiveRun < h.splits[len(h.splits)-1].TimeInPB {
-			h.splits[i].TimeInPB = h.splits[i].TimeInActiveRun
-		}
-		h.splits[i].TimeInActiveRun = time.Duration(0)
+		h.splits[i].Restart(isPB)
 	}
-	h.index = 0
-}
 
-func (h *SplitHandler) GetTime(splitIdx int) time.Duration {
-	s := h.splits[splitIdx]
-	if s.TimeInActiveRun.Milliseconds() == time.Duration(0).Milliseconds() {
-		return s.TimeInPB
-	} else {
-		return s.TimeInActiveRun
-	}
+	h.index = 0
 }

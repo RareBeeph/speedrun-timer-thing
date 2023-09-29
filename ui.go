@@ -22,8 +22,8 @@ func ArrangeMainUI(timerLabel *widget.Label, splitHandler *splitter.SplitHandler
 	titleBarLabel.Alignment = fyne.TextAlignCenter
 
 	splitHandler.SetSplits([]splitter.Split{
-		{Name: "Fake Split 1", TimeInPB: time.Duration(154500000000), BestSegment: time.Duration(153983000000)},
-		{Name: "Fake Split 2", TimeInPB: time.Duration(400000000000), BestSegment: time.Duration(398000000000)},
+		{Name: "Fake Split 1", PBTime: time.Duration(154500000000), BestSegment: time.Duration(153983000000)},
+		{Name: "Fake Split 2", PBTime: time.Duration(400000000000), BestSegment: time.Duration(398000000000)},
 	})
 
 	splitsTable := splitTableFromHandler(splitHandler)
@@ -39,7 +39,7 @@ func splitTableFromHandler(splitHandler *splitter.SplitHandler) (splitsTable *fy
 			layout.NewSpacer(),
 			widget.NewLabel("-"),
 			layout.NewSpacer(),
-			widget.NewLabel(timer.StringifyMilliseconds(splitHandler.GetTime(i).Milliseconds())))
+			widget.NewLabel(timer.StringifyMilliseconds(splitHandler.GetSplits()[i].DisplayTime().Milliseconds())))
 		splitsTable.Add(splitRow)
 	}
 	return splitsTable
