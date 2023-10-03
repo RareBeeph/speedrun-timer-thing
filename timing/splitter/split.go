@@ -1,6 +1,9 @@
 package splitter
 
-import "time"
+import (
+	"speedruntimer/timing/timer"
+	"time"
+)
 
 type Split struct {
 	Name          string
@@ -45,4 +48,8 @@ func (s *Split) DisplayTime() time.Duration {
 	} else {
 		return s.ActiveRunTime
 	}
+}
+
+func (s *Split) String() string {
+	return timer.StringifyMilliseconds(s.DisplayTime().Milliseconds())
 }

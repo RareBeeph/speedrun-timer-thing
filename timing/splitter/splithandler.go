@@ -1,7 +1,6 @@
 package splitter
 
 import (
-	"log"
 	"time"
 )
 
@@ -28,26 +27,15 @@ type SplitHandler struct {
 */
 
 func (h *SplitHandler) SetSplits(s []Split) {
-	if !h.IsIdle() {
+	/*if !h.IsIdle() {
 		log.Println("Attempted to manually set splits while not idle. Operation not performed.")
 		return
-	}
+	}*/
 	h.splits = s
 }
 
 func (h *SplitHandler) GetSplits() []Split {
 	return h.splits
-}
-
-func (h *SplitHandler) IsIdle() bool {
-	// It is possible for the timer to not be idle, but the split handler to be.
-	// This is counterintuitive, but doesn't break any current logic.
-	// Still, perhaps some redundancy should be in order here.
-	return h.index == 0
-}
-
-func (h *SplitHandler) IsActive() bool {
-	return h.index > 0 && h.index < len(h.splits)
 }
 
 func (h *SplitHandler) IsFinished() bool {

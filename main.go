@@ -14,8 +14,9 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"speedruntimer/splitter"
-	"speedruntimer/timer"
+	"speedruntimer/timing"
+	"speedruntimer/timing/splitter"
+	"speedruntimer/timing/timer"
 )
 
 func init() {
@@ -34,25 +35,24 @@ func main() {
 	)
 
 	var (
-		timer        = &timer.Timer{}
-		splitHandler = &splitter.SplitHandler{}
-		timerText    = binding.NewString()
-		timerLabel   = widget.NewLabelWithData(timerText)
+		timeMachine = &timing.TimeMachine{Timer: &timer.Timer{}, SplitHandler: &splitter.SplitHandler{}}
+		timerText   = binding.NewString()
+		timerLabel  = widget.NewLabelWithData(timerText)
 	)
 
-	splitsTable, content := ArrangeMainUI(timerLabel, splitHandler)
+	splitTimes, content := ArrangeMainUI(timerLabel, timeMachine.SplitHandler)
 
 	ticker := time.NewTicker(time.Second / 60)
 	defer ticker.Stop()
 
 	go func(ticker *time.Ticker) {
 		for range ticker.C {
-			timerText.Set(timer.String())
+			timerText.Set(timeMachine.Timer.String())
 		}
 	}(ticker)
 
 	window.SetContent(content)
-	window.Canvas().SetOnTypedKey(HandleKeyInput(timer, splitHandler, splitsTable))
+	window.Canvas().SetOnTypedKey(HandleKeyInput(timeMachine, splitTimes))
 
 	app.Settings().SetTheme(theme.DefaultTheme())
 

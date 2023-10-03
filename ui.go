@@ -3,8 +3,8 @@ package main
 import (
 	"time"
 
-	"speedruntimer/splitter"
-	"speedruntimer/timer"
+	"speedruntimer/timing"
+	"speedruntimer/timing/splitter"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -39,47 +39,30 @@ func splitTableFromHandler(splitHandler *splitter.SplitHandler) (splitsTable *fy
 			layout.NewSpacer(),
 			widget.NewLabel("-"),
 			layout.NewSpacer(),
-			widget.NewLabel(timer.StringifyMilliseconds(splitHandler.GetSplits()[i].DisplayTime().Milliseconds())))
+			widget.NewLabel(splitHandler.GetSplits()[i].String()))
 		splitsTable.Add(splitRow)
 	}
 	return splitsTable
 }
 
-func HandleKeyInput(timer *timer.Timer, splitHandler *splitter.SplitHandler, splitsTable *fyne.Container) func(*fyne.KeyEvent) {
+func HandleKeyInput(timeMachine *timing.TimeMachine, splitsTable *fyne.Container) func(*fyne.KeyEvent) {
 	return func(k *fyne.KeyEvent) {
 		log.Print(k.Name)
 
 		if k.Name == fyne.KeySpace {
-			if timer.Idle() {
-				timer.Start()
-				return
-			} else if timer.Paused() {
-				timer.Resume()
-			} else if timer.Running() {
-				timer.Pause()
-			}
+			timeMachine.Pause()
 		}
 
 		if k.Name == fyne.KeyBackspace {
-			if timer.Stopped() {
-				timer.Restart()
-				splitHandler.Restart()
-				// Scuffed replacement for UpdateItem callback:
-				splitsTable.Objects = splitTableFromHandler(splitHandler).Objects
-				splitsTable.Refresh()
-			} else if timer.Running() || timer.Paused() {
-				timer.Stop()
-			}
+			timeMachine.Stop()
+			// TODO: learn how to do this label update with binding
+			splitsTable.Objects = splitTableFromHandler(timeMachine.SplitHandler).Objects
+			splitsTable.Refresh()
 		}
 
 		if k.Name == fyne.KeyReturn {
-			if timer.Running() {
-				splitHandler.Split(time.Duration(timer.Milliseconds() * 1000000))
-			}
-			if splitHandler.IsFinished() {
-				timer.Stop()
-			}
-			splitsTable.Objects = splitTableFromHandler(splitHandler).Objects
+			timeMachine.Split()
+			splitsTable.Objects = splitTableFromHandler(timeMachine.SplitHandler).Objects
 			splitsTable.Refresh()
 		}
 	}
