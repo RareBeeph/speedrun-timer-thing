@@ -39,7 +39,7 @@ func splitTableFromHandler(splitHandler *splitter.SplitHandler) (splitsTable *fy
 			layout.NewSpacer(),
 			widget.NewLabel("-"),
 			layout.NewSpacer(),
-			widget.NewLabel(splitHandler.GetSplits()[i].String()))
+			splitHandler.SplitLabels[i])
 		splitsTable.Add(splitRow)
 	}
 	return splitsTable
@@ -55,15 +55,10 @@ func HandleKeyInput(timeMachine *timing.TimeMachine, splitsTable *fyne.Container
 
 		if k.Name == fyne.KeyBackspace {
 			timeMachine.Stop()
-			// TODO: learn how to do this label update with binding
-			splitsTable.Objects = splitTableFromHandler(timeMachine.SplitHandler).Objects
-			splitsTable.Refresh()
 		}
 
 		if k.Name == fyne.KeyReturn {
 			timeMachine.Split()
-			splitsTable.Objects = splitTableFromHandler(timeMachine.SplitHandler).Objects
-			splitsTable.Refresh()
 		}
 	}
 }
