@@ -1,7 +1,7 @@
 package splitter
 
 import (
-	"speedruntimer/timing/timer"
+	"speedruntimer/timing/formatting"
 	"time"
 )
 
@@ -51,5 +51,13 @@ func (s *Split) DisplayTime() time.Duration {
 }
 
 func (s *Split) String() string {
-	return timer.StringifyMilliseconds(s.DisplayTime().Milliseconds())
+	return formatting.TimeFormatMilliseconds(s.DisplayTime().Milliseconds())
+}
+
+func (s *Split) Delta() (out string) {
+	if s.ActiveRunTime == 0 {
+		return ""
+	}
+
+	return formatting.DeltaFormatMilliseconds((s.ActiveRunTime - s.PBTime).Milliseconds())
 }

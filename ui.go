@@ -37,7 +37,7 @@ func splitTableFromHandler(splitHandler *splitter.SplitHandler) (splitsTable *fy
 		splitRow := container.New(layout.NewHBoxLayout(),
 			widget.NewLabel(s.Name),
 			layout.NewSpacer(),
-			widget.NewLabel("-"),
+			splitHandler.DeltaLabels[i],
 			layout.NewSpacer(),
 			splitHandler.SplitLabels[i])
 		splitsTable.Add(splitRow)

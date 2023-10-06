@@ -9,6 +9,7 @@ import (
 type SplitHandler struct {
 	splits      []Split
 	SplitLabels []*widget.Label
+	DeltaLabels []*widget.Label
 	index       int
 }
 
@@ -39,8 +40,10 @@ func (h *SplitHandler) SetSplits(s []Split) {
 	// feels a bit scuffed to have this ui logic in here.
 	// but it's something you'd always want to do when running this function.
 	h.SplitLabels = []*widget.Label{}
+	h.DeltaLabels = []*widget.Label{}
 	for _, spl := range s {
 		h.SplitLabels = append(h.SplitLabels, widget.NewLabel(spl.String()))
+		h.DeltaLabels = append(h.DeltaLabels, widget.NewLabel(spl.Delta()))
 	}
 }
 
@@ -65,6 +68,8 @@ func (h *SplitHandler) Split(at time.Duration) {
 
 	h.SplitLabels[h.index].Text = h.splits[h.index].String()
 	h.SplitLabels[h.index].Refresh()
+	h.DeltaLabels[h.index].Text = h.splits[h.index].Delta()
+	h.DeltaLabels[h.index].Refresh()
 
 	h.index++
 }
@@ -77,6 +82,8 @@ func (h *SplitHandler) Restart() {
 
 		h.SplitLabels[i].Text = h.splits[i].String()
 		h.SplitLabels[i].Refresh()
+		h.DeltaLabels[i].Text = h.splits[i].Delta()
+		h.DeltaLabels[i].Refresh()
 	}
 
 	h.index = 0

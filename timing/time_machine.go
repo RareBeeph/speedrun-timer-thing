@@ -25,8 +25,8 @@ type TimeMachine struct {
 	idle		|	active	|	-		|	-			|
 	active		|	(a/f)	|	paused	|	cancelled	|	// this row is shorthand for splithandler substates
 	paused		|	-		|	active	|	cancelled	|	// this row is shorthand for splithandler substates
-	cancelled	|	active	|	-		|	idle		|
-	finished	|	active	|	-		|	idle		|
+	cancelled	|	-		|	-		|	idle		|
+	finished	|	-		|	-		|	idle		|
 				-----------------------------------------
 
 	no other states are valid
@@ -38,7 +38,10 @@ func (t *TimeMachine) Split() {
 		return
 	}
 
-	// should i allow splitting while paused?
+	if t.Timer.Paused() || t.Timer.Stopped() {
+		return
+	}
+
 	t.SplitHandler.Split(time.Duration(t.Timer.Milliseconds() * 1000000))
 	if t.SplitHandler.IsFinished() {
 		t.Timer.Stop()

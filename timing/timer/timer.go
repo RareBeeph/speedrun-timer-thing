@@ -1,7 +1,7 @@
 package timer
 
 import (
-	"fmt"
+	"speedruntimer/timing/formatting"
 	"time"
 )
 
@@ -100,6 +100,15 @@ func (t *Timer) Resume() {
 	t.start = &now
 }
 
+func (t *Timer) Milliseconds() int64 {
+	totalTime := t.ballast.Milliseconds()
+	if t.Running() {
+		totalTime += time.Since(*t.start).Milliseconds()
+	}
+
+	return totalTime
+}
+
 func (t *Timer) Idle() bool {
 	return t.start == nil && t.end == nil && t.ballast == time.Duration(0)
 }
@@ -117,22 +126,5 @@ func (t *Timer) Stopped() bool {
 }
 
 func (t *Timer) String() string {
-	return StringifyMilliseconds(t.Milliseconds())
-}
-
-func (t *Timer) Milliseconds() int64 {
-	totalTime := t.ballast.Milliseconds()
-	if t.Running() {
-		totalTime += time.Since(*t.start).Milliseconds()
-	}
-
-	return totalTime
-}
-
-func StringifyMilliseconds(d int64) string {
-	out := fmt.Sprintf("%02d:%02d.%03d", d/60000%60, d/1000%60, d%1000)
-	if d >= 3600000 {
-		out = fmt.Sprintf("%02d:%s", d/3600000, out)
-	}
-	return out
+	return formatting.TimeFormatMilliseconds(t.Milliseconds())
 }
