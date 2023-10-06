@@ -65,11 +65,7 @@ func (h *SplitHandler) Split(at time.Duration) {
 		prev = h.splits[h.index-1].ActiveRunTime
 	}
 	h.splits[h.index].Split(at, prev)
-
-	h.SplitLabels[h.index].Text = h.splits[h.index].String()
-	h.SplitLabels[h.index].Refresh()
-	h.DeltaLabels[h.index].Text = h.splits[h.index].Delta()
-	h.DeltaLabels[h.index].Refresh()
+	h.updateText(h.index)
 
 	h.index++
 }
@@ -79,12 +75,15 @@ func (h *SplitHandler) Restart() {
 	isPB := h.IsFinished() && h.splits[len(h.splits)-1].IsGreen()
 	for i := range h.splits {
 		h.splits[i].Restart(isPB)
-
-		h.SplitLabels[i].Text = h.splits[i].String()
-		h.SplitLabels[i].Refresh()
-		h.DeltaLabels[i].Text = h.splits[i].Delta()
-		h.DeltaLabels[i].Refresh()
+		h.updateText(i)
 	}
 
 	h.index = 0
+}
+
+func (h *SplitHandler) updateText(index int) {
+	h.SplitLabels[index].Text = h.splits[index].String()
+	h.SplitLabels[index].Refresh()
+	h.DeltaLabels[index].Text = h.splits[index].Delta()
+	h.DeltaLabels[index].Refresh()
 }
