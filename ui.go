@@ -33,13 +33,13 @@ func ArrangeMainUI(timerLabel *widget.Label, splitHandler *splitter.SplitHandler
 
 func splitTableFromHandler(splitHandler *splitter.SplitHandler) (splitsTable *fyne.Container) {
 	splitsTable = container.New(layout.NewVBoxLayout())
-	for i, s := range splitHandler.GetSplits() {
+	for idx, split := range splitHandler.GetSplits() {
 		splitRow := container.New(layout.NewHBoxLayout(),
-			widget.NewLabel(s.Name),
+			widget.NewLabel(split.Name),
 			layout.NewSpacer(),
-			splitHandler.DeltaLabels[i],
+			splitHandler.DeltaLabels[idx],
 			layout.NewSpacer(),
-			splitHandler.SplitLabels[i])
+			splitHandler.SplitLabels[idx])
 		splitsTable.Add(splitRow)
 	}
 	return splitsTable

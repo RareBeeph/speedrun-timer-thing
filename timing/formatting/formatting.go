@@ -1,6 +1,8 @@
 package formatting
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func TimeFormatMilliseconds(milliseconds int64) (out string) {
 	// minutes, seconds, milliseconds

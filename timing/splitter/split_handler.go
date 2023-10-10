@@ -10,7 +10,7 @@ type SplitHandler struct {
 	splits      []Split
 	SplitLabels []*widget.Label
 	DeltaLabels []*widget.Label
-	index       int
+	cursor      int
 }
 
 /*
@@ -30,18 +30,18 @@ type SplitHandler struct {
 	since it determines the number of non-idle states
 */
 
-func (h *SplitHandler) SetSplits(s []Split) {
+func (h *SplitHandler) SetSplits(splits []Split) {
 	/*if !h.IsIdle() {
 		log.Println("Attempted to manually set splits while not idle. Operation not performed.")
 		return
 	}*/
-	h.splits = s
+	h.splits = splits
 
 	// feels a bit scuffed to have this ui logic in here.
 	// but it's something you'd always want to do when running this function.
 	h.SplitLabels = []*widget.Label{}
 	h.DeltaLabels = []*widget.Label{}
-	for _, spl := range s {
+	for _, spl := range splits {
 		h.SplitLabels = append(h.SplitLabels, widget.NewLabel(spl.String()))
 		h.DeltaLabels = append(h.DeltaLabels, widget.NewLabel(spl.Delta()))
 	}
@@ -52,7 +52,7 @@ func (h *SplitHandler) GetSplits() []Split {
 }
 
 func (h *SplitHandler) IsFinished() bool {
-	return h.index >= len(h.splits)
+	return h.cursor >= len(h.splits)
 }
 
 func (h *SplitHandler) Split(at time.Duration) {
@@ -61,13 +61,13 @@ func (h *SplitHandler) Split(at time.Duration) {
 	}
 
 	prev := time.Duration(0)
-	if h.index > 0 {
-		prev = h.splits[h.index-1].ActiveRunTime
+	if h.cursor > 0 {
+		prev = h.splits[h.cursor-1].ActiveRunTime
 	}
-	h.splits[h.index].Split(at, prev)
-	h.updateText(h.index)
+	h.splits[h.cursor].Split(at, prev)
+	h.updateText(h.cursor)
 
-	h.index++
+	h.cursor++
 }
 
 func (h *SplitHandler) Restart() {
@@ -78,12 +78,10 @@ func (h *SplitHandler) Restart() {
 		h.updateText(i)
 	}
 
-	h.index = 0
+	h.cursor = 0
 }
 
 func (h *SplitHandler) updateText(index int) {
-	h.SplitLabels[index].Text = h.splits[index].String()
-	h.SplitLabels[index].Refresh()
-	h.DeltaLabels[index].Text = h.splits[index].Delta()
-	h.DeltaLabels[index].Refresh()
+	h.SplitLabels[index].SetText(h.splits[index].String())
+	h.DeltaLabels[index].SetText(h.splits[index].Delta())
 }
