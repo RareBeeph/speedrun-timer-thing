@@ -37,8 +37,6 @@ func (h *SplitHandler) SetSplits(splits []Split) {
 	}*/
 	h.splits = splits
 
-	// feels a bit scuffed to have this ui logic in here.
-	// but it's something you'd always want to do when running this function.
 	h.SplitLabels = []*widget.Label{}
 	h.DeltaLabels = []*widget.Label{}
 	for _, spl := range splits {
@@ -55,6 +53,9 @@ func (h *SplitHandler) IsFinished() bool {
 	return h.cursor >= len(h.splits)
 }
 
+// Split() updates the selected Split and Labels according to the current duration since the timer started,
+// then increments the cursor to select the next Split and its corresponding Labels.
+// If all splits have been exhausted (and so none is selected), it does nothing.
 func (h *SplitHandler) Split(at time.Duration) {
 	if h.IsFinished() {
 		return
@@ -70,6 +71,10 @@ func (h *SplitHandler) Split(at time.Duration) {
 	h.cursor++
 }
 
+// Restart() resets all Splits to their default state,
+// updating all of their PBTime fields if the final split is better than its stored pb time.
+// It then updates all Labels to correspond to match the new states of their respective Splits,
+// and resets the cursor to select the first Split.
 func (h *SplitHandler) Restart() {
 	// h.IsFinished() is currently redundant here, but it reads better
 	isPB := h.IsFinished() && h.splits[len(h.splits)-1].IsGreen()
