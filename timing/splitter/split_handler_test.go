@@ -28,7 +28,9 @@ import (
 // then increments the cursor to select the next Split and its corresponding Labels.
 // If all splits have been exhausted (and so none is selected), it does nothing.
 
-func TestSplit(t *testing.T) {
+func TestHandlerSplit(t *testing.T) {
+	// TODO: test text updating
+
 	tsh := &SplitHandler{}
 
 	// TODO: fake this
@@ -65,7 +67,9 @@ func TestSplit(t *testing.T) {
 // It then updates all Labels to correspond to match the new states of their respective Splits,
 // and resets the cursor to select the first Split.
 
-func TestRestart(t *testing.T) {
+func TestHandlerRestart(t *testing.T) {
+	// TODO: test text updating
+
 	tsh := &SplitHandler{}
 
 	// TODO: fake this
@@ -93,4 +97,12 @@ func TestRestart(t *testing.T) {
 	tsh.Restart() // is incomplete
 
 	assert.True(t, tsh.splits[0].PBTime == time.Duration(166000000000), "PBTimes are not updated on incomplete run, even if a split is green")
+}
+
+func TestUpdateText(t *testing.T) {
+	// TODO: write this one
+}
+
+func TestSetSplits(t *testing.T) {
+	// TODO: write this one
 }

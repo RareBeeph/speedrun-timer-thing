@@ -42,6 +42,7 @@ func (t *TimeMachine) Split() {
 		return
 	}
 
+	// TODO: magic number equal to time.Millisecond
 	t.SplitHandler.Split(time.Duration(t.Timer.Milliseconds() * 1000000))
 	if t.SplitHandler.IsFinished() {
 		t.Timer.Stop()

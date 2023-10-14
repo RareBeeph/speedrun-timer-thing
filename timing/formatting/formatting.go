@@ -21,15 +21,26 @@ func DeltaFormatMilliseconds(milliseconds int64) (out string) {
 	}
 	milliseconds *= sign
 
+	if sign == -1 {
+		out = "-"
+	} else if sign == 1 {
+		out = "+"
+	}
+
+	if milliseconds == 0 {
+		// special case: not + or -
+		out = "="
+	}
+
 	if milliseconds >= 3600000 {
 		// hours (single digit), minutes, seconds
-		out = fmt.Sprintf("%d:%02d:%02d", sign*milliseconds/3600000, milliseconds/60000%60, milliseconds/1000%60)
+		out += fmt.Sprintf("%d:%02d:%02d", milliseconds/3600000, milliseconds/60000%60, milliseconds/1000%60)
 	} else if milliseconds >= 60000 {
 		// minutes (single digit), seconds
-		out = fmt.Sprintf("%d:%02d", sign*milliseconds/60000%60, milliseconds/1000%60)
+		out += fmt.Sprintf("%d:%02d", milliseconds/60000%60, milliseconds/1000%60)
 	} else {
 		// seconds (always present, but can only be single digit in this case)
-		out = fmt.Sprintf("%d", sign*milliseconds/1000%60)
+		out += fmt.Sprintf("%d", milliseconds/1000%60)
 	}
 	// milliseconds (always present)
 	out += fmt.Sprintf(".%03d", milliseconds%1000)

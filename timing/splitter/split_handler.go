@@ -37,20 +37,13 @@ func (h *SplitHandler) SetSplits(splits []Split) {
 	}*/
 	h.splits = splits
 
+	// TODO: maybe make this reuse labels if they already exist
 	h.SplitLabels = []*widget.Label{}
 	h.DeltaLabels = []*widget.Label{}
 	for _, spl := range splits {
 		h.SplitLabels = append(h.SplitLabels, widget.NewLabel(spl.String()))
 		h.DeltaLabels = append(h.DeltaLabels, widget.NewLabel(spl.Delta()))
 	}
-}
-
-func (h *SplitHandler) GetSplits() []Split {
-	return h.splits
-}
-
-func (h *SplitHandler) IsFinished() bool {
-	return h.cursor >= len(h.splits)
 }
 
 // Split() updates the selected Split and Labels according to the current duration since the timer started,
@@ -89,4 +82,16 @@ func (h *SplitHandler) Restart() {
 func (h *SplitHandler) updateText(index int) {
 	h.SplitLabels[index].SetText(h.splits[index].String())
 	h.DeltaLabels[index].SetText(h.splits[index].Delta())
+}
+
+func (h *SplitHandler) GetSplits() []Split {
+	return h.splits
+}
+
+func (h *SplitHandler) IsBeforeFirstSplit() bool {
+	return h.cursor == 0
+}
+
+func (h *SplitHandler) IsFinished() bool {
+	return h.cursor >= len(h.splits)
 }
