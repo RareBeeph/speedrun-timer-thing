@@ -66,9 +66,13 @@ func TestSetSplits(t *testing.T) {
 func TestHandlerSplit(t *testing.T) {
 	tsh := &SplitHandler{}
 
-	// TODO: fake this
+	// TODO: fake the input durations
+	initialBestSegment := time.Duration(153983000000) // initial best segment for split idx 0
+	badFirstSplit := time.Duration(166000000000)      // greater than initialBestSegment
+	goodSecondSplit := time.Duration(299000000000)    // greater than t1 by less than 398000000000 (arbitrary given BestSegment for split idx 1)
+
 	tsh.SetSplits([]Split{
-		{Name: "Fake Split 1", PBTime: time.Duration(154500000000), BestSegment: time.Duration(153983000000)},
+		{Name: "Fake Split 1", PBTime: time.Duration(154500000000), BestSegment: initialBestSegment},
 		{Name: "Fake Split 2", PBTime: time.Duration(400000000000), BestSegment: time.Duration(398000000000)},
 	})
 
@@ -76,14 +80,13 @@ func TestHandlerSplit(t *testing.T) {
 	cur := 0
 	tsh.cursor = cur
 
-	// TODO: fake the input durations
-	tsh.Split(time.Duration(166000000000)) // not a best segment
+	tsh.Split(badFirstSplit) // not a best segment
 
 	assert.Equal(t, tsh.cursor, cur+1,
 		"Cursor should increment when the handler is not finished")
-	assert.Equal(t, tsh.splits[cur].ActiveRunTime, time.Duration(166000000000),
+	assert.Equal(t, tsh.splits[cur].ActiveRunTime, badFirstSplit,
 		"Selected Split's ActiveRunTime should be updated with the given time")
-	assert.Equal(t, tsh.splits[cur].BestSegment, time.Duration(153983000000),
+	assert.Equal(t, tsh.splits[cur].BestSegment, initialBestSegment,
 		"Selected Split's BestSegment should not be updated if segment in run is not a best segment")
 	assert.False(t, tsh.IsFinished(),
 		"IsFinished should return false when the handler is not finished")
@@ -92,17 +95,19 @@ func TestHandlerSplit(t *testing.T) {
 	assert.Equal(t, tsh.DeltaLabels[cur].Text, tsh.splits[cur].Delta(),
 		"Delta labels should be updated on split")
 
-	tsh.Split(time.Duration(299000000000)) // is a best segment
+	cur = tsh.cursor           // update knowledge
+	tsh.Split(goodSecondSplit) // is a best segment
 
 	// difference of given splits
-	assert.Equal(t, tsh.splits[cur+1].BestSegment, time.Duration(133000000000),
+	assert.Equal(t, tsh.splits[cur].BestSegment, goodSecondSplit-badFirstSplit,
 		"Selected Split's BestSegment should be updated if run is a best segment")
 	assert.True(t, tsh.IsFinished(),
 		"IsFinished should return true when the handler is finished")
 
+	cur = tsh.cursor                       // update knowledge
 	tsh.Split(time.Duration(355000000000)) // list has already been exhausted
 
-	assert.Equal(t, tsh.cursor, cur+2,
+	assert.Equal(t, tsh.cursor, cur,
 		"Cursor should not increment when the handler is finished")
 }
 
@@ -114,19 +119,24 @@ func TestHandlerSplit(t *testing.T) {
 func TestHandlerRestart(t *testing.T) {
 	tsh := &SplitHandler{}
 
-	// TODO: fake this
+	// TODO: fake these
+	badFirstSplit := time.Duration(166000000000)   // greater than 154500000000 (arbitrary given first split)
+	goodSecondSplit := time.Duration(299000000000) // less than 400000000000 (arbitrary given last split)
+
+	goodFirstSplit := time.Duration(155000000000) // less than t11
+	badSecondSplit := time.Duration(311000000000) // greater than t12
+
 	tsh.SetSplits([]Split{
 		{Name: "Fake Split 1", PBTime: time.Duration(154500000000), BestSegment: time.Duration(153983000000)},
 		{Name: "Fake Split 2", PBTime: time.Duration(400000000000), BestSegment: time.Duration(398000000000)},
 	})
 
-	// TODO: fake these
-	tsh.Split(time.Duration(166000000000))
-	tsh.Split(time.Duration(299000000000)) // run is complete, is a pb
+	tsh.Split(badFirstSplit)
+	tsh.Split(goodSecondSplit) // run is complete, is a pb
 	tsh.Restart()
 
 	// TODO: make sure this applies to arbitrary index
-	assert.Equal(t, tsh.splits[0].PBTime, time.Duration(166000000000),
+	assert.Equal(t, tsh.splits[0].PBTime, badFirstSplit,
 		"PBTimes should be updated on PB, even if a non-final split isn't green")
 	assert.Equal(t, tsh.SplitLabels[0].Text, tsh.splits[0].String(),
 		"Split labels should be updated on PB")
@@ -134,20 +144,20 @@ func TestHandlerRestart(t *testing.T) {
 		"Delta labels should be updated on PB")
 	assert.Zero(t, tsh.cursor, "Cursor should be reset")
 
-	tsh.Split(time.Duration(155000000000)) // is green
-	tsh.Split(time.Duration(311000000000)) // but is not pb
+	tsh.Split(goodFirstSplit) // is green
+	tsh.Split(badSecondSplit) // but is not pb
 	tsh.Restart()
 
-	assert.Equal(t, tsh.splits[0].PBTime, time.Duration(166000000000),
+	assert.Equal(t, tsh.splits[0].PBTime, badFirstSplit,
 		"PBTimes should not be updated on non-PB, even if a non-final split is green")
 	assert.Equal(t, tsh.SplitLabels[0].Text, tsh.splits[0].String(),
 		"Split labels should still be updated on non-PB (return from active run to previous PB text)")
 	assert.Equal(t, tsh.DeltaLabels[0].Text, tsh.splits[0].Delta(),
 		"Delta labels should be updated on non-PB")
 
-	tsh.Split(time.Duration(155000000000))
+	tsh.Split(goodFirstSplit)
 	tsh.Restart() // is incomplete
-	assert.Equal(t, tsh.splits[0].PBTime, time.Duration(166000000000),
+	assert.Equal(t, tsh.splits[0].PBTime, badFirstSplit,
 		"PBTimes should not be updated on incomplete run, even if a split is green")
 	// labels should still update, but that's redundant
 
