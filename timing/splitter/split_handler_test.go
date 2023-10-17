@@ -69,7 +69,7 @@ func TestHandlerSplit(t *testing.T) {
 	// TODO: fake the input durations
 	initialBestSegment := time.Duration(153983000000) // initial best segment for split idx 0
 	badFirstSplit := time.Duration(166000000000)      // greater than initialBestSegment
-	goodSecondSplit := time.Duration(299000000000)    // greater than t1 by less than 398000000000 (arbitrary given BestSegment for split idx 1)
+	goodSecondSplit := time.Duration(299000000000)    // greater than badFirstSplit by less than 398000000000 (arbitrary given BestSegment for split idx 1)
 
 	tsh.SetSplits([]Split{
 		{Name: "Fake Split 1", PBTime: time.Duration(154500000000), BestSegment: initialBestSegment},
@@ -123,8 +123,8 @@ func TestHandlerRestart(t *testing.T) {
 	badFirstSplit := time.Duration(166000000000)   // greater than 154500000000 (arbitrary given first split)
 	goodSecondSplit := time.Duration(299000000000) // less than 400000000000 (arbitrary given last split)
 
-	goodFirstSplit := time.Duration(155000000000) // less than t11
-	badSecondSplit := time.Duration(311000000000) // greater than t12
+	goodFirstSplit := time.Duration(155000000000) // less than badFirstSplit
+	badSecondSplit := time.Duration(311000000000) // greater than goodSecondSplit
 
 	tsh.SetSplits([]Split{
 		{Name: "Fake Split 1", PBTime: time.Duration(154500000000), BestSegment: time.Duration(153983000000)},
