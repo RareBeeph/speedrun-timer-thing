@@ -1,6 +1,8 @@
 package splitter
 
 import (
+	"log"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -24,36 +26,49 @@ import (
 	since it determines the number of non-idle states
 */
 
+func fakeSplits() (out []Split) {
+	l := rand.Intn(10) // l == the last index of the output. so len(out) will be l+1, ranging from 1 to 11.
+	for l >= 0 {
+		t := time.Duration(0)
+		if len(out) > 0 {
+			t = out[len(out)-1].PBTime
+		}
+		s := Split{
+			// durations capped to 24 hours to prevent integer overflow (would only occur in practice if program runs for ~300 years)
+			PBTime:      t + time.Duration(rand.Int63n(int64(time.Hour*24))), // monotonically increasing
+			BestSegment: time.Duration(rand.Int63n(int64(time.Hour * 24))),
+		}
+		out = append(out, s)
+		l--
+	}
+	return out
+}
+
 func TestSetSplits(t *testing.T) {
 	handler := &SplitHandler{}
 
-	// TODO: maybe fake input list length
-	splits := []Split{
-		{Name: "Fake Split 1", PBTime: time.Duration(154500000000), BestSegment: time.Duration(153983000000)},
-		{Name: "Fake Split 2", PBTime: time.Duration(400000000000), BestSegment: time.Duration(398000000000)},
-	}
-	handler.SetSplits([]Split{
-		{Name: "Fake Split 1", PBTime: time.Duration(154500000000), BestSegment: time.Duration(153983000000)},
-		{Name: "Fake Split 2", PBTime: time.Duration(400000000000), BestSegment: time.Duration(398000000000)},
-	})
+	fakesplits := fakeSplits()
+	handler.SetSplits(fakesplits)
 
-	assert.ElementsMatch(t, handler.splits, splits,
+	assert.ElementsMatch(t, handler.splits, fakesplits,
 		"Splits should be set as given")
 	assert.Len(t, handler.SplitLabels, len(handler.splits),
 		"Split label list should be as long as split list")
-	assert.Equal(t, handler.SplitLabels[0].Text, handler.splits[0].String(),
-		"Split label should contain string returned by split String()")
 	assert.Len(t, handler.DeltaLabels, len(handler.splits),
 		"Delta label list should be as long as split list")
-	assert.Equal(t, handler.DeltaLabels[0].Text, handler.splits[0].Delta(),
-		"Delta label should contain string returned by split Delta()")
+	for i := range handler.splits {
+		assert.Equal(t, handler.SplitLabels[i].Text, handler.splits[i].String(),
+			"Split label should contain string returned by split String()")
+		assert.Equal(t, handler.DeltaLabels[i].Text, handler.splits[i].Delta(),
+			"Delta label should contain string returned by split Delta()")
+	}
 
-	splits = []Split{
-		{Name: "Fake Split 1", PBTime: time.Duration(154500000000), BestSegment: time.Duration(153983000000)},
-	} // shorter than before
-	handler.SetSplits(splits)
+	log.Println(len(fakesplits))
+	fakesplits = fakesplits[1:] // shorter than before; possibly len == 0
+	log.Println(len(fakesplits))
+	handler.SetSplits(fakesplits)
 
-	assert.ElementsMatch(t, handler.splits, splits,
+	assert.ElementsMatch(t, handler.splits, fakesplits,
 		"Splits shouldn't leave residue when overwriting")
 	assert.Len(t, handler.SplitLabels, len(handler.splits),
 		"Label lists should be able to shorten to be only as long as split list")
@@ -62,7 +77,6 @@ func TestSetSplits(t *testing.T) {
 // Split() updates the selected Split and Labels according to the current duration since the timer started,
 // then increments the cursor to select the next Split and its corresponding Labels.
 // If all splits have been exhausted (and so none is selected), it does nothing.
-
 func TestHandlerSplit(t *testing.T) {
 	handler := &SplitHandler{}
 
@@ -114,51 +128,44 @@ func TestHandlerSplit(t *testing.T) {
 // updating all of their PBTime fields if the final split is better than its stored pb time.
 // It then updates all Labels to correspond to match the new states of their respective Splits,
 // and resets the cursor to select the first Split.
-
 func TestHandlerRestart(t *testing.T) {
 	handler := &SplitHandler{}
 
-	// TODO: fake these
-	badFirstSplit := time.Duration(166000000000)   // greater than 154500000000 (arbitrary given first split)
-	goodSecondSplit := time.Duration(299000000000) // less than 400000000000 (arbitrary given last split)
+	fakeStoredSplits := fakeSplits()
+	// a little bit of a hacky run faking method:
+	fakeRunTimes := fakeSplits() // can represent an incomplete run or an over-complete run, which covers all my bases
 
-	goodFirstSplit := time.Duration(155000000000) // less than badFirstSplit
-	badSecondSplit := time.Duration(311000000000) // greater than goodSecondSplit
+	handler.SetSplits(fakeStoredSplits)
 
-	handler.SetSplits([]Split{
-		{Name: "Fake Split 1", PBTime: time.Duration(154500000000), BestSegment: time.Duration(153983000000)},
-		{Name: "Fake Split 2", PBTime: time.Duration(400000000000), BestSegment: time.Duration(398000000000)},
-	})
-
-	handler.Split(badFirstSplit)
-	handler.Split(goodSecondSplit) // run is complete, is a pb
+	for i := range fakeRunTimes {
+		handler.Split(fakeRunTimes[i].PBTime)
+	}
 	handler.Restart()
 
-	// TODO: make sure this applies to arbitrary index
-	assert.Equal(t, handler.splits[0].PBTime, badFirstSplit,
-		"PBTimes should be updated on PB, even if a non-final split isn't green")
-	assert.Equal(t, handler.SplitLabels[0].Text, handler.splits[0].String(),
-		"Split labels should be updated on PB")
-	assert.Equal(t, handler.DeltaLabels[0].Text, handler.splits[0].Delta(),
-		"Delta labels should be updated on PB")
+	if len(fakeRunTimes) < len(handler.splits) {
+		for i := range handler.splits {
+			assert.Equal(t, handler.splits[i].PBTime, fakeStoredSplits[i].PBTime,
+				"PBTimes should not be updated on incomplete run")
+		}
+	} else if fakeRunTimes[len(handler.splits)-1].PBTime <= handler.splits[len(handler.splits)-1].PBTime {
+		for i := range handler.splits {
+			assert.Equal(t, handler.splits[i].PBTime, fakeRunTimes[i].PBTime,
+				"PBTimes should be updated on PB")
+		}
+	} else {
+		for i := range handler.splits {
+			assert.Equal(t, handler.splits[i].PBTime, fakeStoredSplits[i].PBTime,
+				"PBTimes should not be updated on non-PB")
+		}
+	}
+
+	for i := range handler.splits {
+		assert.Equal(t, handler.SplitLabels[i].Text, handler.splits[i].String(),
+			"Split labels should be updated")
+		assert.Equal(t, handler.DeltaLabels[i].Text, handler.splits[i].Delta(),
+			"Delta labels should be updated")
+	}
 	assert.Zero(t, handler.cursor, "Cursor should be reset")
-
-	handler.Split(goodFirstSplit) // is green
-	handler.Split(badSecondSplit) // but is not pb
-	handler.Restart()
-
-	assert.Equal(t, handler.splits[0].PBTime, badFirstSplit,
-		"PBTimes should not be updated on non-PB, even if a non-final split is green")
-	assert.Equal(t, handler.SplitLabels[0].Text, handler.splits[0].String(),
-		"Split labels should still be updated on non-PB (return from active run to previous PB text)")
-	assert.Equal(t, handler.DeltaLabels[0].Text, handler.splits[0].Delta(),
-		"Delta labels should be updated on non-PB")
-
-	handler.Split(goodFirstSplit)
-	handler.Restart() // is incomplete
-	assert.Equal(t, handler.splits[0].PBTime, badFirstSplit,
-		"PBTimes should not be updated on incomplete run, even if a split is green")
-	// labels should still update, but that's redundant
 
 	handler.Restart() // from idle
 	// not sure what to test about this besides that it doesn't crash or anything.
