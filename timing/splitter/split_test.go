@@ -1,6 +1,7 @@
 package splitter
 
 import (
+	"math/rand"
 	"testing"
 	"time"
 
@@ -8,19 +9,21 @@ import (
 )
 
 func TestSplit(t *testing.T) {
-	split := Split{Name: "Fake Split 1", PBTime: time.Duration(154500000000), BestSegment: time.Duration(153983000000)}
+	// not sure if i should do this seeding
+	rand.Seed(time.Now().Unix())
 
-	// TODO: fake this
-	baseTime := time.Duration(154400000000)
-	bestSegmentEndTime := time.Duration(180000000000)  // more than goodNotBestTime
-	bestSegmentStartTime := time.Duration(40000000000) // less than end time by less than 153983000000 (arbitrary given BestSegment)
+	split := Split{Name: "Fake Split 1", BestSegment: time.Duration(rand.Int63n(int64(time.Hour * 24)))}
 
-	split.Split(baseTime, time.Duration(0)) // Green, but not a best segment, and not resetting to update PBTime
+	baseTime := time.Duration(rand.Int63n(int64(time.Hour * 24)))
+	bestSegmentEndTime := time.Duration(rand.Int63n(int64(time.Hour * 24)))
+	bestSegmentStartTime := bestSegmentEndTime - time.Duration(rand.Int63n(int64(split.BestSegment)))
+
+	split.Split(baseTime, time.Duration(0)) // may be green, but not a best segment, and not resetting to update PBTime
 	assert.Equal(t, split.ActiveRunTime, baseTime,
 		"Split() should set ActiveRunTime")
 
 	split.ActiveRunTime = time.Duration(0)
-	split.Split(bestSegmentEndTime, bestSegmentStartTime) // Best segment, but not green
+	split.Split(bestSegmentEndTime, bestSegmentStartTime) // Best segment, but may be not green
 	assert.Equal(t, split.BestSegment, bestSegmentEndTime-bestSegmentStartTime,
 		"Split() should set BestSegment on a best segment, even if not green")
 }

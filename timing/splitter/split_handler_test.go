@@ -27,6 +27,9 @@ import (
 */
 
 func fakeSplits() (out []Split) {
+	// not sure if i should do this seeding
+	rand.Seed(time.Now().Unix())
+
 	l := rand.Intn(10) // l == the last index of the output. so len(out) will be l+1, ranging from 1 to 11.
 	for l >= 0 {
 		t := time.Duration(0)
@@ -80,48 +83,61 @@ func TestSetSplits(t *testing.T) {
 func TestHandlerSplit(t *testing.T) {
 	handler := &SplitHandler{}
 
-	// TODO: fake the input durations
-	initialBestSegment := time.Duration(153983000000) // initial best segment for split idx 0
-	badFirstSplit := time.Duration(166000000000)      // greater than initialBestSegment
-	goodSecondSplit := time.Duration(299000000000)    // greater than badFirstSplit by less than 398000000000 (arbitrary given BestSegment for split idx 1)
+	fakeStoredSplits := fakeSplits()
+	// hacky run faking method; encodes active run time as pb time
+	fakeRunTimes := fakeSplits()
 
-	handler.SetSplits([]Split{
-		{Name: "Fake Split 1", PBTime: time.Duration(154500000000), BestSegment: initialBestSegment},
-		{Name: "Fake Split 2", PBTime: time.Duration(400000000000), BestSegment: time.Duration(398000000000)},
-	})
+	handler.SetSplits(fakeStoredSplits)
 
-	// TODO: fake cursor value
-	cursor := 0
+	for i := range fakeRunTimes {
+		var initialBestSegment time.Duration
+		if i < len(handler.splits) {
+			initialBestSegment = handler.splits[i].BestSegment
+		} else {
+			initialBestSegment = handler.splits[len(handler.splits)-1].BestSegment
+		}
 
-	handler.Split(badFirstSplit) // not a best segment
+		var newSegment time.Duration
+		if i == 0 {
+			newSegment = fakeRunTimes[0].PBTime
+		} else {
+			newSegment = fakeRunTimes[i].PBTime - fakeRunTimes[i-1].PBTime
+		}
 
-	assert.Equal(t, handler.cursor, cursor+1,
-		"Cursor should increment when the handler is not finished")
-	assert.Equal(t, handler.splits[cursor].ActiveRunTime, badFirstSplit,
-		"Selected Split's ActiveRunTime should be updated with the given time")
-	assert.Equal(t, handler.splits[cursor].BestSegment, initialBestSegment,
-		"Selected Split's BestSegment should not be updated if segment in run is not a best segment")
-	assert.False(t, handler.IsFinished(),
-		"IsFinished should return false when the handler is not finished")
-	assert.Equal(t, handler.SplitLabels[cursor].Text, handler.splits[cursor].String(),
-		"Split labels should be updated on split")
-	assert.Equal(t, handler.DeltaLabels[cursor].Text, handler.splits[cursor].Delta(),
-		"Delta labels should be updated on split")
+		handler.Split(fakeRunTimes[i].PBTime)
 
-	cursor = handler.cursor        // update knowledge
-	handler.Split(goodSecondSplit) // is a best segment
+		if i < len(handler.splits) {
+			assert.Equal(t, handler.splits[i].ActiveRunTime, fakeRunTimes[i].PBTime,
+				"Selected Split's ActiveRunTime should be updated with the given time")
+			assert.Equal(t, handler.SplitLabels[i].Text, handler.splits[i].String(),
+				"Split labels should be updated on split")
+			assert.Equal(t, handler.DeltaLabels[i].Text, handler.splits[i].Delta(),
+				"Delta labels should be updated on split")
 
-	// difference of given splits
-	assert.Equal(t, handler.splits[cursor].BestSegment, goodSecondSplit-badFirstSplit,
-		"Selected Split's BestSegment should be updated if run is a best segment")
-	assert.True(t, handler.IsFinished(),
-		"IsFinished should return true when the handler is finished")
+			if newSegment < initialBestSegment {
+				assert.Equal(t, handler.splits[i].BestSegment, newSegment,
+					"Selected Split's BestSegment should be updated if run is a best segment")
+			} else {
+				assert.Equal(t, handler.splits[i].BestSegment, initialBestSegment,
+					"Selected Split's BestSegment should not be updated if segment in run is not a best segment")
+			}
+		} else {
+			assert.Equal(t, initialBestSegment, handler.splits[len(handler.splits)-1].BestSegment,
+				"Final split's BestSegment should not be updated on splits performed after the end of the split list")
+		}
 
-	cursor = handler.cursor                    // update knowledge
-	handler.Split(time.Duration(355000000000)) // list has already been exhausted
-
-	assert.Equal(t, handler.cursor, cursor,
-		"Cursor should not increment when the handler is finished")
+		if handler.cursor < len(handler.splits) {
+			assert.False(t, handler.IsFinished(),
+				"IsFinished should return false when the handler is not finished")
+			assert.Equal(t, handler.cursor, i+1,
+				"Cursor should increment when the handler is not finished")
+		} else {
+			assert.True(t, handler.IsFinished(),
+				"IsFinished should return true when the handler is finished")
+			assert.Equal(t, len(handler.splits), handler.cursor,
+				"Cursor should not increment when the handler is finished")
+		}
+	}
 }
 
 // Restart() resets all Splits to their default state,
