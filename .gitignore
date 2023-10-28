@@ -29,3 +29,5 @@ speedruntimer
 
 # github.com/silenceper/gowatch output uses dirname and not package name
 speedrun-timer-thing
+
+.tool-versions
