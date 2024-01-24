@@ -7,7 +7,6 @@ import (
 )
 
 func TestTimeFormat(t *testing.T) {
-	// TODO: fake these inputs
 	assert.Equal(t, TimeFormatMilliseconds(200000), "03:20.000",
 		"If input less than an hour, don't show hours")
 	assert.Equal(t, TimeFormatMilliseconds(4000000), "01:06:40.000",
@@ -15,7 +14,6 @@ func TestTimeFormat(t *testing.T) {
 }
 
 func TestDeltaFormat(t *testing.T) {
-	// TODO: fake these inputs
 	assert.Equal(t, DeltaFormatMilliseconds(-100), "-0.100",
 		"Case: (negative) seconds")
 	assert.Equal(t, DeltaFormatMilliseconds(-100000), "-1:40.000",

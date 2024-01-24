@@ -26,25 +26,27 @@ import (
 	since it determines the number of non-idle states
 */
 
-func fakeSplits() (out []Split) {
-	// not sure if i should do this seeding
-	rand.Seed(time.Now().Unix())
-
-	l := rand.Intn(10) // l == the last index of the output. so len(out) will be l+1, ranging from 1 to 11.
-	for l >= 0 {
+func fakeSplitsWithLength(length int) (out []Split) {
+	for length > 0 {
 		t := time.Duration(0)
 		if len(out) > 0 {
 			t = out[len(out)-1].PBTime
 		}
+
 		s := Split{
 			// durations capped to 24 hours to prevent integer overflow (would only occur in practice if program runs for ~300 years)
-			PBTime:      t + time.Duration(rand.Int63n(int64(time.Hour*24))), // monotonically increasing
-			BestSegment: time.Duration(rand.Int63n(int64(time.Hour * 24))),
+			PBTime:      t + randDurationWithMax(day), // monotonically increasing
+			BestSegment: randDurationWithMax(day),
 		}
 		out = append(out, s)
-		l--
+
+		length--
 	}
 	return out
+}
+
+func fakeSplits() []Split {
+	return fakeSplitsWithLength(rand.Intn(10) + 1) // range from 1 to 10 inclusive
 }
 
 func TestSetSplits(t *testing.T) {

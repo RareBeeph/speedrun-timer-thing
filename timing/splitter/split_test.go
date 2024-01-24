@@ -8,15 +8,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// returns a random duration between 0 and max
+func randDurationWithMax(max time.Duration) time.Duration {
+	return time.Duration(rand.Int63n(int64(max)))
+}
+
+const day = time.Hour * 24
+
 func TestSplit(t *testing.T) {
-	// not sure if i should do this seeding
-	rand.Seed(time.Now().Unix())
+	split := Split{Name: "Fake Split 1", BestSegment: randDurationWithMax(day)}
 
-	split := Split{Name: "Fake Split 1", BestSegment: time.Duration(rand.Int63n(int64(time.Hour * 24)))}
-
-	baseTime := time.Duration(rand.Int63n(int64(time.Hour * 24)))
-	bestSegmentEndTime := time.Duration(rand.Int63n(int64(time.Hour * 24)))
-	bestSegmentStartTime := bestSegmentEndTime - time.Duration(rand.Int63n(int64(split.BestSegment)))
+	baseTime := randDurationWithMax(day)
+	bestSegmentEndTime := randDurationWithMax(day)
+	bestSegmentStartTime := bestSegmentEndTime - randDurationWithMax(split.BestSegment)
 
 	split.Split(baseTime, time.Duration(0)) // may be green, but not a best segment, and not resetting to update PBTime
 	assert.Equal(t, split.ActiveRunTime, baseTime,
@@ -29,10 +33,10 @@ func TestSplit(t *testing.T) {
 }
 
 func TestRestart(t *testing.T) {
-	// TODO: fake this
-	initialPBTime := time.Duration(154500000000)
-	goodTime := time.Duration(154400000000) // Less than initialPBTime
-	badTime := time.Duration(180000000000)  // More than initialPBTime
+	initialPBTime := randDurationWithMax(day)
+	// TODO: perhaps just have a single split time, and let running the test a lot hit these two cases roughly equally often
+	goodTime := randDurationWithMax(initialPBTime)
+	badTime := initialPBTime + randDurationWithMax(day)
 
 	split := Split{Name: "Fake Split 1", PBTime: initialPBTime}
 
@@ -50,22 +54,24 @@ func TestRestart(t *testing.T) {
 }
 
 func TestIsGreen(t *testing.T) {
-	// TODO: fake this
-	split := Split{Name: "Fake Split 1", PBTime: time.Duration(154500000000), BestSegment: time.Duration(153983000000)}
+	initialPBTime := randDurationWithMax(day)
 
-	split.ActiveRunTime = time.Duration(180000000000) // is not green
+	split := Split{Name: "Fake Split 1", PBTime: initialPBTime}
+
+	// TODO: perhaps let running the test a lot hit these two cases roughly equally often
+
+	split.ActiveRunTime = initialPBTime + randDurationWithMax(day) // is not green
 	assert.False(t, split.IsGreen(),
 		"IsGreen() should return false when active run is not ahead of PB")
 
-	split.ActiveRunTime = time.Duration(154400000000) // is green
+	split.ActiveRunTime = randDurationWithMax(initialPBTime) // is green
 	assert.True(t, split.IsGreen(),
 		"IsGreen() should return true when active run is ahead of PB")
 }
 
 func TestDisplayTime(t *testing.T) {
-	// TODO: fake this
-	initialPBTime := time.Duration(154500000000)
-	runTime := time.Duration(180000000000) // greater than initialPBTime
+	initialPBTime := randDurationWithMax(day)
+	runTime := randDurationWithMax(day)
 
 	split := Split{Name: "Fake Split 1", PBTime: initialPBTime}
 
@@ -78,9 +84,10 @@ func TestDisplayTime(t *testing.T) {
 }
 
 func TestDelta(t *testing.T) {
-	// TODO: fake this
-	split := Split{Name: "Fake Split 1", PBTime: time.Duration(154500000000)}
+	split := Split{Name: "Fake Split 1", PBTime: randDurationWithMax(day)}
 
 	assert.Zero(t, split.Delta(),
 		"Delta() should return the empty string when no run is active")
+
+	// TODO: where is the second half of this
 }
