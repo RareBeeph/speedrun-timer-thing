@@ -1,11 +1,14 @@
 package main
 
 import (
+	"encoding/json"
+	"io"
 	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -61,6 +64,22 @@ func main() {
 	// window.SetFixedSize(true)
 	// window.Resize(fyne.NewSize(window.Canvas().Size().Width, 720))
 	window.Resize(fyne.NewSize(540, 300))
+
+	var callback = func(f fyne.URIReadCloser, e error) {
+		var s []splitter.Split
+		splitsFromFile := &s
+		bytesFromFile, _ := io.ReadAll(f)
+		json.Unmarshal(bytesFromFile, splitsFromFile)
+
+		timeMachine.SplitHandler.SetSplits(*splitsFromFile)
+
+		// janky hack
+		splitTimes, content = ArrangeMainUI(timerLabel, timeMachine.SplitHandler)
+		window.SetContent(content)
+	}
+
+	d := dialog.NewFileOpen(callback, window)
+	d.Show()
 
 	window.ShowAndRun()
 }

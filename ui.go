@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	"speedruntimer/timing"
 	"speedruntimer/timing/splitter"
 
@@ -21,10 +19,11 @@ func ArrangeMainUI(timerLabel *widget.Label, splitHandler *splitter.SplitHandler
 	timerLabel.Alignment = fyne.TextAlignCenter
 	titleBarLabel.Alignment = fyne.TextAlignCenter
 
-	splitHandler.SetSplits([]splitter.Split{
+	// janky hack
+	/* splitHandler.SetSplits([]splitter.Split{
 		{Name: "Fake Split 1", PBTime: time.Duration(154500000000), BestSegment: time.Duration(153983000000)},
 		{Name: "Fake Split 2", PBTime: time.Duration(400000000000), BestSegment: time.Duration(398000000000)},
-	})
+	}) */
 
 	splitsTable := splitTableFromHandler(splitHandler)
 
