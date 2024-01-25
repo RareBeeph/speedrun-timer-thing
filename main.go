@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -65,20 +66,42 @@ func main() {
 	// window.Resize(fyne.NewSize(window.Canvas().Size().Width, 720))
 	window.Resize(fyne.NewSize(540, 300))
 
-	var callback = func(f fyne.URIReadCloser, e error) {
-		var s []splitter.Split
-		splitsFromFile := &s
-		bytesFromFile, _ := io.ReadAll(f)
-		json.Unmarshal(bytesFromFile, splitsFromFile)
+	var saveSplitFile = func(f fyne.URIWriteCloser, e error) {
+		// handle error or cancel
 
-		timeMachine.SplitHandler.SetSplits(*splitsFromFile)
+		s := splitter.SplitData{}
+		s.Splits = timeMachine.SplitHandler.GetSplits()
+		s.GameName = content.Objects[0].(*widget.Label).Text // janky hack
+		s.CategoryName = "Any%"                              // unused
+		s.AttemptCount = 69                                  // unused
+
+		bytesForFile, _ := json.Marshal(s)
+		io.WriteString(f, string(bytesForFile))
+	}
+
+	shortcutSave := &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: fyne.KeyModifierControl}
+	window.Canvas().AddShortcut(shortcutSave, func(fyne.Shortcut) {
+		savedialog := dialog.NewFileSave(saveSplitFile, window)
+		savedialog.Show()
+	})
+
+	var loadSplitFile = func(f fyne.URIReadCloser, e error) {
+		// TODO: handle error or cancel
+
+		var s splitter.SplitData
+		splitsFromFile := &s
+		bytesFromFile, _ := io.ReadAll(f) // TODO: handle error
+
+		json.Unmarshal(bytesFromFile, splitsFromFile) // TODO: handle error
+
+		timeMachine.SplitHandler.SetSplits((*splitsFromFile).Splits)
 
 		// janky hack
 		splitTimes, content = ArrangeMainUI(timerLabel, timeMachine.SplitHandler)
 		window.SetContent(content)
 	}
 
-	d := dialog.NewFileOpen(callback, window)
+	d := dialog.NewFileOpen(loadSplitFile, window)
 	d.Show()
 
 	window.ShowAndRun()

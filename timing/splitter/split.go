@@ -9,7 +9,7 @@ type Split struct {
 	Name          string
 	PBTime        time.Duration // Refers to the time in your PB run. Updated on run restart.
 	BestSegment   time.Duration
-	ActiveRunTime time.Duration
+	ActiveRunTime time.Duration `json:"-"`
 
 	// Ideas:
 	// what about pb pace by this split?
