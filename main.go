@@ -67,7 +67,10 @@ func main() {
 	window.Resize(fyne.NewSize(540, 300))
 
 	var saveSplitFile = func(f fyne.URIWriteCloser, e error) {
-		// handle error or cancel
+		// handle error
+		if f == nil {
+			return
+		}
 
 		s := splitter.SplitData{}
 		s.Splits = timeMachine.SplitHandler.GetSplits()
@@ -86,7 +89,15 @@ func main() {
 	})
 
 	var loadSplitFile = func(f fyne.URIReadCloser, e error) {
-		// TODO: handle error or cancel
+		// TODO: handle error
+		// TODO: handle setting game title label
+		if f == nil {
+			timeMachine.SplitHandler.SetSplits([]splitter.Split{})
+			// janky hack but copied
+			splitTimes, content = ArrangeMainUI(timerLabel, timeMachine.SplitHandler)
+			window.SetContent(content)
+			return
+		}
 
 		var s splitter.SplitData
 		splitsFromFile := &s
