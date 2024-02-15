@@ -30,8 +30,10 @@ import (
 	no other states are valid
 */
 
+var run = &timer.Run{}
+
 func TestSplit(t *testing.T) {
-	machine := TimeMachine{Timer: &timer.Timer{}, SplitHandler: &splitter.SplitHandler{}}
+	machine := TimeMachine{Timer: timer.New(run), SplitHandler: &splitter.SplitHandler{}}
 
 	// TODO: fake this
 	machine.SplitHandler.SetSplits([]splitter.Split{
@@ -82,7 +84,7 @@ func TestSplit(t *testing.T) {
 }
 
 func TestPause(t *testing.T) {
-	machine := TimeMachine{Timer: &timer.Timer{}, SplitHandler: &splitter.SplitHandler{}}
+	machine := TimeMachine{Timer: timer.New(run), SplitHandler: &splitter.SplitHandler{}}
 
 	// TODO: fake this
 	machine.SplitHandler.SetSplits([]splitter.Split{
@@ -119,7 +121,7 @@ func TestPause(t *testing.T) {
 }
 
 func TestStop(t *testing.T) {
-	machine := TimeMachine{Timer: &timer.Timer{}, SplitHandler: &splitter.SplitHandler{}}
+	machine := TimeMachine{Timer: timer.New(run), SplitHandler: &splitter.SplitHandler{}}
 
 	// TODO: fake this
 	machine.SplitHandler.SetSplits([]splitter.Split{

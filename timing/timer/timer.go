@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type ITimer interface {
+type Timer interface {
 	Start() time.Time
 	Stop() time.Time
 	Restart() time.Time
@@ -18,11 +18,17 @@ type ITimer interface {
 	Stopped() bool
 
 	String() string
+	Milliseconds() int64
 }
 
-type Timer struct {
+type timer struct {
 	start, end *time.Time
+	run        *Run
 	ballast    time.Duration
+}
+
+func New(run *Run) Timer {
+	return &timer{run: run}
 }
 
 /*
@@ -38,7 +44,7 @@ type Timer struct {
 		Start() -> Running; Stop() -> Idle; Restart() -> Idle; Pause() -> Idle; Resume() -> Idle
 */
 
-func (t *Timer) Start() time.Time {
+func (t *timer) Start() time.Time {
 	now := time.Now()
 
 	// should never occur, but just in case
@@ -52,7 +58,7 @@ func (t *Timer) Start() time.Time {
 	return now
 }
 
-func (t *Timer) Stop() time.Time {
+func (t *timer) Stop() time.Time {
 	now := time.Now()
 
 	// should never occur, but just in case
@@ -68,7 +74,7 @@ func (t *Timer) Stop() time.Time {
 	return now
 }
 
-func (t *Timer) Restart() time.Time {
+func (t *timer) Restart() time.Time {
 	now := time.Now()
 	t.start = nil
 	t.end = nil
@@ -76,7 +82,7 @@ func (t *Timer) Restart() time.Time {
 	return now
 }
 
-func (t *Timer) Pause() time.Time {
+func (t *timer) Pause() time.Time {
 	now := time.Now()
 
 	// should never occur, but just in case
@@ -89,7 +95,7 @@ func (t *Timer) Pause() time.Time {
 	return now
 }
 
-func (t *Timer) Resume() {
+func (t *timer) Resume() {
 	now := time.Now()
 
 	// should never occur, but just in case
@@ -100,7 +106,7 @@ func (t *Timer) Resume() {
 	t.start = &now
 }
 
-func (t *Timer) Milliseconds() int64 {
+func (t *timer) Milliseconds() int64 {
 	totalTime := t.ballast.Milliseconds()
 	if t.Running() {
 		totalTime += time.Since(*t.start).Milliseconds()
@@ -109,22 +115,22 @@ func (t *Timer) Milliseconds() int64 {
 	return totalTime
 }
 
-func (t *Timer) Idle() bool {
+func (t *timer) Idle() bool {
 	return t.start == nil && t.end == nil && t.ballast == time.Duration(0)
 }
 
-func (t *Timer) Running() bool {
+func (t *timer) Running() bool {
 	return t.start != nil && t.end == nil
 }
 
-func (t *Timer) Paused() bool {
+func (t *timer) Paused() bool {
 	return t.start == nil && t.end == nil && t.ballast != time.Duration(0)
 }
 
-func (t *Timer) Stopped() bool {
+func (t *timer) Stopped() bool {
 	return t.end != nil
 }
 
-func (t *Timer) String() string {
+func (t *timer) String() string {
 	return formatting.TimeFormatMilliseconds(t.Milliseconds())
 }

@@ -7,7 +7,7 @@ import (
 )
 
 type TimeMachine struct {
-	Timer        *timer.Timer
+	Timer        timer.Timer
 	SplitHandler *splitter.SplitHandler
 }
 
