@@ -10,6 +10,7 @@ type Timer interface {
 	Stop() time.Time
 	Restart() time.Time
 	Pause() time.Time
+	Split() time.Time
 	Resume()
 
 	Idle() bool
@@ -18,13 +19,16 @@ type Timer interface {
 	Stopped() bool
 
 	String() string
-	Milliseconds() int64
+	Milliseconds() time.Duration
 }
 
 type timer struct {
+	// TODO: these don't need to be pointers
 	start, end *time.Time
-	run        *Run
 	ballast    time.Duration
+
+	run     *Run
+	segment int
 }
 
 func New(run *Run) Timer {
@@ -95,6 +99,27 @@ func (t *timer) Pause() time.Time {
 	return now
 }
 
+func (t *timer) Split() time.Time {
+	now := time.Now()
+	sinceStart := (now.Sub(*t.start) * time.Millisecond) + time.Duration(t.ballast.Milliseconds())
+
+	if !t.Running() {
+		return now
+	}
+
+	// TODO: Actually check that this a valid segment
+	segment := t.run.Segments[t.segment]
+	prev := t.previousSegment()
+
+	segment.Split(sinceStart, prev.ActiveRunTime)
+
+	if t.segment == len(t.run.Segments)-1 {
+		t.Stop()
+	}
+
+	return now
+}
+
 func (t *timer) Resume() {
 	now := time.Now()
 
@@ -104,15 +129,6 @@ func (t *timer) Resume() {
 	}
 
 	t.start = &now
-}
-
-func (t *timer) Milliseconds() int64 {
-	totalTime := t.ballast.Milliseconds()
-	if t.Running() {
-		totalTime += time.Since(*t.start).Milliseconds()
-	}
-
-	return totalTime
 }
 
 func (t *timer) Idle() bool {
@@ -132,5 +148,18 @@ func (t *timer) Stopped() bool {
 }
 
 func (t *timer) String() string {
-	return formatting.TimeFormatMilliseconds(t.Milliseconds())
+	return formatting.TimeFormatMilliseconds(int64(t.Milliseconds()))
+}
+
+// This is suitable for display but NOT for calculation
+// as the time measurement occurs inside of this function
+// and is not representative of the time the keypress
+// event was received
+func (t *timer) Milliseconds() time.Duration {
+	totalTime := t.ballast.Milliseconds()
+	if t.Running() {
+		totalTime += time.Since(*t.start).Milliseconds()
+	}
+
+	return time.Duration(totalTime)
 }

@@ -9,6 +9,6 @@ type Split = splitter.Split
 type Run struct {
 	GameName string
 	Category string
-	Segments []Split
+	Segments []*Split
 	Attempts int
 }
