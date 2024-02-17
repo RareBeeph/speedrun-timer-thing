@@ -7,9 +7,10 @@ import (
 
 	"os"
 
+	"speedruntimer/layout"
+
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"speedruntimer/layout"
 )
 
 func init() {

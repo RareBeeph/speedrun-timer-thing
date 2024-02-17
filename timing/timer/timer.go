@@ -19,12 +19,11 @@ type Timer interface {
 	Stopped() bool
 
 	String() string
-	Milliseconds() time.Duration
+	Elapsed() time.Duration
 }
 
 type timer struct {
-	// TODO: these don't need to be pointers
-	start, end *time.Time
+	start, end time.Time // end is redundant info now that we have the Run pointer
 	ballast    time.Duration
 
 	run     *Run
@@ -56,9 +55,9 @@ func (t *timer) Start() time.Time {
 		return now
 	}
 
-	t.end = nil
+	t.end = time.Time{}
 	t.ballast = time.Duration(0)
-	t.start = &now
+	t.start = now
 	return now
 }
 
@@ -71,17 +70,17 @@ func (t *timer) Stop() time.Time {
 	}
 
 	if t.Running() {
-		t.ballast += time.Since(*t.start)
+		t.ballast += time.Since(t.start)
 	}
-	t.start = nil
-	t.end = &now
+	t.start = time.Time{}
+	t.end = now
 	return now
 }
 
 func (t *timer) Restart() time.Time {
 	now := time.Now()
-	t.start = nil
-	t.end = nil
+	t.start = time.Time{}
+	t.end = time.Time{}
 	t.ballast = time.Duration(0)
 	return now
 }
@@ -94,20 +93,23 @@ func (t *timer) Pause() time.Time {
 		return now
 	}
 
-	t.ballast += time.Since(*t.start)
-	t.start = nil
+	t.ballast += time.Since(t.start)
+	t.start = time.Time{}
 	return now
 }
 
 func (t *timer) Split() time.Time {
 	now := time.Now()
-	sinceStart := (now.Sub(*t.start) * time.Millisecond) + time.Duration(t.ballast.Milliseconds())
+	sinceStart := (now.Sub(t.start) * time.Millisecond) + time.Duration(t.ballast.Milliseconds())
 
 	if !t.Running() {
 		return now
 	}
 
-	// TODO: Actually check that this a valid segment
+	if t.run.Segments[t.segment] == nil {
+		return now // probably want to do some actual error reporting here
+	}
+
 	segment := t.run.Segments[t.segment]
 	prev := t.previousSegment()
 
@@ -128,37 +130,37 @@ func (t *timer) Resume() {
 		return
 	}
 
-	t.start = &now
+	t.start = now
 }
 
 func (t *timer) Idle() bool {
-	return t.start == nil && t.end == nil && t.ballast == time.Duration(0)
+	return t.start.IsZero() && t.end.IsZero() && t.ballast == time.Duration(0)
 }
 
 func (t *timer) Running() bool {
-	return t.start != nil && t.end == nil
+	return !t.start.IsZero() && t.end.IsZero()
 }
 
 func (t *timer) Paused() bool {
-	return t.start == nil && t.end == nil && t.ballast != time.Duration(0)
+	return t.start.IsZero() && t.end.IsZero() && t.ballast != time.Duration(0)
 }
 
 func (t *timer) Stopped() bool {
-	return t.end != nil
+	return !t.end.IsZero()
 }
 
 func (t *timer) String() string {
-	return formatting.TimeFormatMilliseconds(int64(t.Milliseconds()))
+	return formatting.TimeFormatMilliseconds(int64(t.Elapsed()))
 }
 
 // This is suitable for display but NOT for calculation
 // as the time measurement occurs inside of this function
 // and is not representative of the time the keypress
 // event was received
-func (t *timer) Milliseconds() time.Duration {
+func (t *timer) Elapsed() time.Duration {
 	totalTime := t.ballast.Milliseconds()
 	if t.Running() {
-		totalTime += time.Since(*t.start).Milliseconds()
+		totalTime += time.Since(t.start).Milliseconds()
 	}
 
 	return time.Duration(totalTime)

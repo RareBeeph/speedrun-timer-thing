@@ -11,12 +11,12 @@ import (
 	//"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
-	"speedruntimer/timing/splitter"
+	"speedruntimer/timing/timer"
 )
 
 type TimerLayout struct {
 	labels     *labels
-	currentRun *splitter.SplitData
+	currentRun *timer.Run
 }
 
 type labels struct {
@@ -32,7 +32,7 @@ func NewTimerLayout() *TimerLayout {
 			canvas.NewText("Category", color.White),
 			[]*widget.Label{},
 		},
-		&splitter.SplitData{},
+		&timer.Run{},
 	}
 
 	ret.labels.game.TextSize = 32
