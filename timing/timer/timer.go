@@ -1,6 +1,7 @@
 package timer
 
 import (
+	"errors"
 	"speedruntimer/timing/formatting"
 	"time"
 )
@@ -30,8 +31,12 @@ type timer struct {
 	segment int
 }
 
-func New(run *Run) Timer {
-	return &timer{run: run}
+func New(run *Run) (Timer, error) {
+	var err error
+	if len(run.Segments) == 0 {
+		err = errors.New("run must have at least one segment")
+	}
+	return &timer{run: run}, err
 }
 
 /*
@@ -108,7 +113,7 @@ func (t *timer) Split() time.Time {
 	}
 
 	if t.run.Segments[t.segment] == nil {
-		return now // probably want to do some actual error reporting here
+		return now // TODO: probably want to do some actual error reporting here
 	}
 
 	segment := t.run.Segments[t.segment]
