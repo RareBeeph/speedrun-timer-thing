@@ -82,6 +82,7 @@ func (t *timer) Restart() time.Time {
 	t.start = time.Time{}
 	t.end = time.Time{}
 	t.ballast = time.Duration(0)
+	t.segment = 0
 	return now
 }
 
@@ -118,6 +119,7 @@ func (t *timer) Split() time.Time {
 	if t.segment == len(t.run.Segments)-1 {
 		t.Stop()
 	}
+	t.segment++
 
 	return now
 }
