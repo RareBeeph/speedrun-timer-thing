@@ -18,7 +18,7 @@ const day = time.Hour * 24
 func TestSplit(t *testing.T) {
 	split := Split{Name: "Fake Split 1", BestSegment: randDurationWithMax(day)}
 
-	baseTime := randDurationWithMax(day)
+	baseTime := split.BestSegment + randDurationWithMax(day)
 	bestSegmentEndTime := randDurationWithMax(day)
 	bestSegmentStartTime := bestSegmentEndTime - randDurationWithMax(split.BestSegment)
 
