@@ -32,11 +32,10 @@ type timer struct {
 }
 
 func New(run *Run) (Timer, error) {
-	var err error
 	if len(run.Segments) == 0 {
-		err = errors.New("run must have at least one segment")
+		return nil, errors.New("run must have at least one segment")
 	}
-	return &timer{run: run}, err
+	return &timer{run: run}, nil
 }
 
 /*

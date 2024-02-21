@@ -19,13 +19,23 @@ import (
 		Start() -> Running; Stop() -> Idle; Restart() -> Idle; Pause() -> Idle; Resume() -> Idle
 */
 
-var run = &Run{}
+var run = &Run{Segments: []*Split{{}}}
 
 // TODO: remove this - the switch to a constructor implies it
 // func TestImplementsITimer(t *testing.T) {
 // 	timer := New(run)
 // 	var _ = (Timer)(timer)
 // }
+
+func TestNew(t *testing.T) {
+	timer, err := New(run)
+	assert.NotNil(t, timer, "constructed timer should not be nil when input run has segments")
+	assert.Nil(t, err, "constructor err should be nil when input run has segments")
+
+	timer, err = New(&Run{})
+	assert.Nil(t, timer, "constructed timer should be nil when input run is empty")
+	assert.NotNil(t, err, "constructor err should not be nil when input run is empty")
+}
 
 func TestIdle(t *testing.T) {
 	timer, _ := New(run)
