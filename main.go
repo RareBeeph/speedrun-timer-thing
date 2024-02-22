@@ -1,6 +1,9 @@
 package main
 
 import (
+	"encoding/json"
+	"io"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/theme"
@@ -8,6 +11,7 @@ import (
 	"os"
 
 	"speedruntimer/layout"
+	"speedruntimer/timing/timer"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -36,7 +40,12 @@ func main() {
 	window.Resize(fyne.NewSize(window.Canvas().Size().Width*1.85, 720))
 	// window.Resize(fyne.NewSize(540, 300))
 
-	tl := layout.NewTimerLayout()
+	s := &timer.Run{}
+	file, _ := os.Open("./testsave2.json")
+	filebytes, _ := io.ReadAll(file)
+	json.Unmarshal(filebytes, s)
+
+	tl := layout.NewTimerLayout(s)
 	window.SetContent(tl.Show())
 
 	window.ShowAndRun()

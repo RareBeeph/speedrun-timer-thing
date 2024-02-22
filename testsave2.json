@@ -1,1 +1,1 @@
-{"Splits":[{"Name":"Fake Split 1","PBTime":169500000000,"BestSegment":153983000000},{"Name":"Fake Split 2","PBTime":400000000000,"BestSegment":398000000000}],"GameName":"Fake Game Title","CategoryName":"Any%","AttemptCount":69}
+{"Segments":[{"Name":"Fake Split 1","PBTime":169500000000,"BestSegment":153983000000},{"Name":"Fake Split 2","PBTime":400000000000,"BestSegment":398000000000}],"GameName":"Fake Game Title","Category":"Any%","AttemptCount":69}

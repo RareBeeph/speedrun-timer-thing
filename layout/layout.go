@@ -16,23 +16,36 @@ import (
 
 type TimerLayout struct {
 	labels     *labels
-	currentRun *timer.Run
+	currentRun timer.Timer
 }
 
 type labels struct {
-	game     *canvas.Text
-	category *canvas.Text
-	splits   []*widget.Label
+	game       *canvas.Text
+	category   *canvas.Text
+	splitNames []*widget.Label
+	deltas     []*widget.Label
+	splits     []*widget.Label
 }
 
-func NewTimerLayout() *TimerLayout {
+func NewTimerLayout(run *timer.Run) *TimerLayout {
+	tim, _ := timer.New(run) // TODO: potential error left unhandled
+
+	var namelabels, deltalabels, splitlabels []*widget.Label
+	for _, s := range run.Segments {
+		namelabels = append(namelabels, widget.NewLabel(s.Name))
+		deltalabels = append(deltalabels, widget.NewLabel(s.Delta()))
+		splitlabels = append(splitlabels, widget.NewLabel(s.String()))
+	}
+
 	ret := &TimerLayout{
 		&labels{
-			canvas.NewText("Game", color.White),
-			canvas.NewText("Category", color.White),
-			[]*widget.Label{},
+			canvas.NewText(run.GameName, color.White),
+			canvas.NewText(run.Category, color.White),
+			namelabels,
+			deltalabels,
+			splitlabels,
 		},
-		&timer.Run{},
+		tim,
 	}
 
 	ret.labels.game.TextSize = 32
@@ -45,11 +58,21 @@ func NewTimerLayout() *TimerLayout {
 }
 
 func (t *TimerLayout) Show() fyne.CanvasObject {
+	stuff := []fyne.CanvasObject{t.labels.game, t.labels.category}
+	for i := range t.labels.splits {
+		// assuming the 3 label arrays are of equal length
+		stuff = append(stuff, container.NewHBox(
+			t.labels.splitNames[i],
+			t.labels.deltas[i],
+			t.labels.splits[i],
+		))
+	}
+
 	content := container.NewBorder(
 		nil,
 		nil,
 		layout.NewSpacer(),
-		container.NewVBox(t.labels.game, t.labels.category),
+		container.NewVBox(stuff...),
 	)
 
 	return content
