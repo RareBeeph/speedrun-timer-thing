@@ -25,6 +25,7 @@ type labels struct {
 	splitNames []*widget.Label
 	deltas     []*widget.Label
 	splits     []*widget.Label
+	clock      *canvas.Text
 }
 
 func NewTimerLayout(run *timer.Run) *TimerLayout {
@@ -44,6 +45,7 @@ func NewTimerLayout(run *timer.Run) *TimerLayout {
 			namelabels,
 			deltalabels,
 			splitlabels,
+			canvas.NewText("0:00.000", color.White),
 		},
 		tim,
 	}
@@ -53,6 +55,9 @@ func NewTimerLayout(run *timer.Run) *TimerLayout {
 
 	ret.labels.category.TextSize = 24
 	ret.labels.category.Alignment = fyne.TextAlignCenter
+
+	ret.labels.clock.TextSize = 32
+	ret.labels.clock.Alignment = fyne.TextAlignTrailing
 
 	return ret
 }
@@ -67,6 +72,8 @@ func (t *TimerLayout) Show() fyne.CanvasObject {
 			t.labels.splits[i],
 		))
 	}
+	stuff = append(stuff, layout.NewSpacer())
+	stuff = append(stuff, t.labels.clock)
 
 	content := container.NewBorder(
 		nil,
