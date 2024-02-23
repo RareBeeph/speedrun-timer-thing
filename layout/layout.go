@@ -29,7 +29,7 @@ type labels struct {
 }
 
 func NewTimerLayout(run *timer.Run) *TimerLayout {
-	tim, _ := timer.New(run) // TODO: potential error left unhandled
+	time, _ := timer.New(run) // TODO: potential error left unhandled
 
 	var namelabels, deltalabels, splitlabels []*widget.Label
 	for _, s := range run.Segments {
@@ -47,7 +47,7 @@ func NewTimerLayout(run *timer.Run) *TimerLayout {
 			splitlabels,
 			canvas.NewText("0:00.000", color.White),
 		},
-		tim,
+		time,
 	}
 
 	ret.labels.game.TextSize = 32
