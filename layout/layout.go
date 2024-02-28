@@ -63,62 +63,75 @@ func NewTimerLayout(run *timer.Run) *TimerLayout {
 	return ret
 }
 
-func (t *TimerLayout) Show(window fyne.Window) fyne.CanvasObject {
-	stuff := []fyne.CanvasObject{t.labels.game, t.labels.category}
-	for i := range t.labels.splits {
-		// assuming the 3 label arrays are of equal length
-		stuff = append(stuff, container.NewHBox(
-			t.labels.splitNames[i],
-			t.labels.deltas[i],
-			t.labels.splits[i],
-		))
+func (t *TimerLayout) handleKeyInput(k *fyne.KeyEvent) {
+	if k.Name == fyne.KeySpace {
+		t.currentRun.Pause()
 	}
-	stuff = append(stuff, layout.NewSpacer())
-	stuff = append(stuff, t.labels.clock)
 
-	content := container.NewBorder(
-		nil,
-		nil,
-		layout.NewSpacer(),
-		container.NewVBox(stuff...),
-	)
+	if k.Name == fyne.KeyBackspace {
+		t.currentRun.Stop()
+	}
 
-	// ported from old ui.go
-	window.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
-		if k.Name == fyne.KeySpace {
-			t.currentRun.Pause()
-		}
+	if k.Name == fyne.KeyReturn {
+		t.currentRun.Split()
+	}
 
-		if k.Name == fyne.KeyBackspace {
-			t.currentRun.Stop()
-		}
+	for idx, l := range t.labels.splits {
+		s := t.currentRun.GetSplit(idx)
+		l.Text = (&s).String()
+		l.Refresh()
+	}
 
-		if k.Name == fyne.KeyReturn {
-			t.currentRun.Split()
-		}
+	for idx, l := range t.labels.deltas {
+		s := t.currentRun.GetSplit(idx)
+		l.Text = (&s).Delta()
+		l.Refresh()
+	}
+}
 
-		for idx, l := range t.labels.splits {
-			s := t.currentRun.GetSplit(idx)
-			l.Text = (&s).String()
-			l.Refresh()
-		}
-
-		for idx, l := range t.labels.deltas {
-			s := t.currentRun.GetSplit(idx)
-			l.Text = (&s).Delta()
-			l.Refresh()
-		}
-	})
-
-	// ported from old main.go
+func (t *TimerLayout) activateTimer() {
 	ticker := time.NewTicker(time.Second / 60)
-	// defer ticker.Stop()
+	// note: ticker will only stop on app close
 	go func(ticker *time.Ticker) {
 		for range ticker.C {
 			t.labels.clock.Text = t.currentRun.String()
 			t.labels.clock.Refresh()
 		}
 	}(ticker)
+}
+
+func (t *TimerLayout) arrangeContent() []fyne.CanvasObject {
+	var interleavedLabels []fyne.CanvasObject
+	for i := range t.labels.splits {
+		// assuming the 3 label arrays are of equal length
+		interleavedLabels = append(
+			interleavedLabels,
+			t.labels.splitNames[i],
+			t.labels.deltas[i],
+			t.labels.splits[i],
+		)
+	}
+
+	out := []fyne.CanvasObject{
+		t.labels.game,
+		t.labels.category,
+		container.NewGridWithColumns(3, interleavedLabels...),
+		layout.NewSpacer(),
+		t.labels.clock,
+	}
+	return out
+}
+
+func (t *TimerLayout) Show(window fyne.Window) fyne.CanvasObject {
+	content := container.NewBorder(
+		nil,
+		nil,
+		layout.NewSpacer(),
+		container.NewVBox(t.arrangeContent()...),
+	)
+
+	window.Canvas().SetOnTypedKey(t.handleKeyInput)
+	t.activateTimer()
 
 	return content
 }
