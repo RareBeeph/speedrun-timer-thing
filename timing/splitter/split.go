@@ -8,8 +8,8 @@ import (
 type Split struct {
 	Name          string
 	ActiveRunTime time.Duration `json:"-"`
-	pbTime        time.Duration // Refers to the time in your PB run. Updated on run restart.
-	bestSegment   time.Duration
+	PBTime        time.Duration // Refers to the time in your PB run. Updated on run restart.
+	BestSegment   time.Duration
 
 	// Ideas:
 	// what about pb pace by this split?
@@ -24,27 +24,27 @@ func (s *Split) Split(at time.Duration, prev time.Duration) {
 	s.ActiveRunTime = at
 
 	segmentTime := s.ActiveRunTime - prev
-	if segmentTime < s.bestSegment {
-		s.bestSegment = segmentTime
+	if segmentTime < s.BestSegment {
+		s.BestSegment = segmentTime
 	}
 }
 
 func (s *Split) Restart(isPB bool) {
 	if isPB {
-		s.pbTime = s.ActiveRunTime
+		s.PBTime = s.ActiveRunTime
 	}
 	s.ActiveRunTime = time.Duration(0)
 }
 
 // IsGreen returns if the split's time in the current run is better than its time in your previous PB run.
 func (s *Split) IsGreen() bool {
-	return s.ActiveRunTime != time.Duration(0) && s.ActiveRunTime < s.pbTime
+	return s.ActiveRunTime != time.Duration(0) && s.ActiveRunTime < s.PBTime
 }
 
 // DisplayTime returns what time should be displayed for a given split.
 func (s *Split) DisplayTime() time.Duration {
 	if s.ActiveRunTime.Milliseconds() == time.Duration(0).Milliseconds() {
-		return s.pbTime
+		return s.PBTime
 	} else {
 		return s.ActiveRunTime
 	}
@@ -59,5 +59,5 @@ func (s *Split) Delta() (out string) {
 		return ""
 	}
 
-	return formatting.DeltaFormatMilliseconds((s.ActiveRunTime - s.pbTime).Milliseconds())
+	return formatting.DeltaFormatMilliseconds((s.ActiveRunTime - s.PBTime).Milliseconds())
 }
