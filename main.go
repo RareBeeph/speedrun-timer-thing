@@ -46,7 +46,7 @@ func main() {
 	json.Unmarshal(filebytes, s)
 
 	tl := layout.NewTimerLayout(s)
-	window.SetContent(tl.Show())
+	window.SetContent(tl.Show(window))
 
 	window.ShowAndRun()
 }

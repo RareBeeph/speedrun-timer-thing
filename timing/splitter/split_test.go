@@ -16,11 +16,11 @@ func randDurationWithMax(max time.Duration) time.Duration {
 const day = time.Hour * 24
 
 func TestSplit(t *testing.T) {
-	split := Split{Name: "Fake Split 1", BestSegment: randDurationWithMax(day)}
+	split := Split{Name: "Fake Split 1", bestSegment: randDurationWithMax(day)}
 
-	baseTime := split.BestSegment + randDurationWithMax(day)
+	baseTime := split.bestSegment + randDurationWithMax(day)
 	bestSegmentEndTime := randDurationWithMax(day)
-	bestSegmentStartTime := bestSegmentEndTime - randDurationWithMax(split.BestSegment)
+	bestSegmentStartTime := bestSegmentEndTime - randDurationWithMax(split.bestSegment)
 
 	split.Split(baseTime, time.Duration(0)) // may be green, but not a best segment, and not resetting to update PBTime
 	assert.Equal(t, split.ActiveRunTime, baseTime,
@@ -28,7 +28,7 @@ func TestSplit(t *testing.T) {
 
 	split.ActiveRunTime = time.Duration(0)
 	split.Split(bestSegmentEndTime, bestSegmentStartTime) // Best segment, but may be not green
-	assert.Equal(t, split.BestSegment, bestSegmentEndTime-bestSegmentStartTime,
+	assert.Equal(t, split.bestSegment, bestSegmentEndTime-bestSegmentStartTime,
 		"Split() should set BestSegment on a best segment, even if not green")
 }
 
@@ -38,25 +38,25 @@ func TestRestart(t *testing.T) {
 	goodTime := randDurationWithMax(initialPBTime)
 	badTime := initialPBTime + randDurationWithMax(day)
 
-	split := Split{Name: "Fake Split 1", PBTime: initialPBTime}
+	split := Split{Name: "Fake Split 1", pbTime: initialPBTime}
 
 	split.ActiveRunTime = goodTime // is green
 	split.Restart(false)           // but not a PB run
 	assert.Zero(t, split.ActiveRunTime,
 		"Restart() should reset ActiveRunTime to 0")
-	assert.Equal(t, split.PBTime, initialPBTime,
+	assert.Equal(t, split.pbTime, initialPBTime,
 		"Restart() should not set PBTime if isPB is false, even if green")
 
 	split.ActiveRunTime = badTime // is not green
 	split.Restart(true)           // but is a PB run
-	assert.Equal(t, split.PBTime, badTime,
+	assert.Equal(t, split.pbTime, badTime,
 		"Restart() should set PBTime if isPB is true, even if not green")
 }
 
 func TestIsGreen(t *testing.T) {
 	initialPBTime := randDurationWithMax(day)
 
-	split := Split{Name: "Fake Split 1", PBTime: initialPBTime}
+	split := Split{Name: "Fake Split 1", pbTime: initialPBTime}
 
 	// TODO: perhaps let running the test a lot hit these two cases roughly equally often
 
@@ -73,7 +73,7 @@ func TestDisplayTime(t *testing.T) {
 	initialPBTime := randDurationWithMax(day)
 	runTime := randDurationWithMax(day)
 
-	split := Split{Name: "Fake Split 1", PBTime: initialPBTime}
+	split := Split{Name: "Fake Split 1", pbTime: initialPBTime}
 
 	assert.Equal(t, split.DisplayTime(), initialPBTime,
 		"DisplayTime() should return PBTime when no run is active")
@@ -84,7 +84,7 @@ func TestDisplayTime(t *testing.T) {
 }
 
 func TestDelta(t *testing.T) {
-	split := Split{Name: "Fake Split 1", PBTime: randDurationWithMax(day)}
+	split := Split{Name: "Fake Split 1", pbTime: randDurationWithMax(day)}
 
 	assert.Zero(t, split.Delta(),
 		"Delta() should return the empty string when no run is active")

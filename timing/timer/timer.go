@@ -21,6 +21,7 @@ type Timer interface {
 
 	String() string
 	Elapsed() time.Duration
+	GetSplit(int) Split
 }
 
 type timer struct {
@@ -39,6 +40,8 @@ func New(run *Run) (Timer, error) {
 }
 
 /*
+	OLD COMMENT
+
 	State machine transition table:
 
 	Stopped (i.e. end != nil):
@@ -68,6 +71,11 @@ func (t *timer) Start() time.Time {
 func (t *timer) Stop() time.Time {
 	now := time.Now()
 
+	if t.Stopped() {
+		t.Restart()
+		return now
+	}
+
 	// should never occur, but just in case
 	if t.Idle() {
 		return now
@@ -87,11 +95,21 @@ func (t *timer) Restart() time.Time {
 	t.end = time.Time{}
 	t.ballast = time.Duration(0)
 	t.segment = 0
+
+	for _, s := range t.run.Segments {
+		s.Restart(t.run.Segments[len(t.run.Segments)-1].IsGreen())
+	}
+
 	return now
 }
 
 func (t *timer) Pause() time.Time {
 	now := time.Now()
+
+	if t.Paused() {
+		t.Resume()
+		return now
+	}
 
 	// should never occur, but just in case
 	if !t.Running() {
@@ -105,7 +123,13 @@ func (t *timer) Pause() time.Time {
 
 func (t *timer) Split() time.Time {
 	now := time.Now()
-	sinceStart := (now.Sub(t.start) * time.Millisecond) + time.Duration(t.ballast.Milliseconds())
+
+	if t.Idle() {
+		t.Start()
+		return now
+	}
+
+	sinceStart := (now.Sub(t.start)) + time.Duration(t.ballast.Milliseconds())
 
 	if !t.Running() {
 		return now
@@ -169,5 +193,9 @@ func (t *timer) Elapsed() time.Duration {
 		totalTime += time.Since(t.start).Milliseconds()
 	}
 
-	return time.Duration(totalTime)
+	return time.Duration(totalTime) // this is scaled down by a factor of time.Millisecond
+}
+
+func (t *timer) GetSplit(idx int) Split {
+	return *t.run.Segments[idx]
 }

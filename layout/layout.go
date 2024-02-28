@@ -2,6 +2,7 @@ package layout
 
 import (
 	"image/color"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -62,7 +63,7 @@ func NewTimerLayout(run *timer.Run) *TimerLayout {
 	return ret
 }
 
-func (t *TimerLayout) Show() fyne.CanvasObject {
+func (t *TimerLayout) Show(window fyne.Window) fyne.CanvasObject {
 	stuff := []fyne.CanvasObject{t.labels.game, t.labels.category}
 	for i := range t.labels.splits {
 		// assuming the 3 label arrays are of equal length
@@ -81,6 +82,43 @@ func (t *TimerLayout) Show() fyne.CanvasObject {
 		layout.NewSpacer(),
 		container.NewVBox(stuff...),
 	)
+
+	// ported from old ui.go
+	window.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
+		if k.Name == fyne.KeySpace {
+			t.currentRun.Pause()
+		}
+
+		if k.Name == fyne.KeyBackspace {
+			t.currentRun.Stop()
+		}
+
+		if k.Name == fyne.KeyReturn {
+			t.currentRun.Split()
+		}
+
+		for idx, l := range t.labels.splits {
+			s := t.currentRun.GetSplit(idx)
+			l.Text = (&s).String()
+			l.Refresh()
+		}
+
+		for idx, l := range t.labels.deltas {
+			s := t.currentRun.GetSplit(idx)
+			l.Text = (&s).Delta()
+			l.Refresh()
+		}
+	})
+
+	// ported from old main.go
+	ticker := time.NewTicker(time.Second / 60)
+	// defer ticker.Stop()
+	go func(ticker *time.Ticker) {
+		for range ticker.C {
+			t.labels.clock.Text = t.currentRun.String()
+			t.labels.clock.Refresh()
+		}
+	}(ticker)
 
 	return content
 }
