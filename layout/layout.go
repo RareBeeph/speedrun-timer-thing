@@ -100,7 +100,7 @@ func (t *TimerLayout) activateTimer() {
 	}(ticker)
 }
 
-func (t *TimerLayout) arrangeContent() []fyne.CanvasObject {
+func (t *TimerLayout) arrangeContent() fyne.CanvasObject {
 	var interleavedLabels []fyne.CanvasObject
 	for i := range t.labels.splits {
 		// assuming the 3 label arrays are of equal length
@@ -112,23 +112,18 @@ func (t *TimerLayout) arrangeContent() []fyne.CanvasObject {
 		)
 	}
 
-	out := []fyne.CanvasObject{
+	out := container.NewVBox(
 		t.labels.game,
 		t.labels.category,
 		container.NewGridWithColumns(3, interleavedLabels...),
 		layout.NewSpacer(),
 		t.labels.clock,
-	}
+	)
 	return out
 }
 
 func (t *TimerLayout) Show(window fyne.Window) fyne.CanvasObject {
-	content := container.NewBorder(
-		nil,
-		nil,
-		layout.NewSpacer(),
-		container.NewVBox(t.arrangeContent()...),
-	)
+	content := t.arrangeContent()
 
 	window.Canvas().SetOnTypedKey(t.handleKeyInput)
 	t.activateTimer()
