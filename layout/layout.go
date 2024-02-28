@@ -123,10 +123,7 @@ func (t *TimerLayout) arrangeContent() fyne.CanvasObject {
 }
 
 func (t *TimerLayout) Show(window fyne.Window) fyne.CanvasObject {
-	content := t.arrangeContent()
-
 	window.Canvas().SetOnTypedKey(t.handleKeyInput)
 	t.activateTimer()
-
-	return content
+	return t.arrangeContent()
 }
