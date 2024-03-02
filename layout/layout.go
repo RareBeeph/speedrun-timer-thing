@@ -39,6 +39,13 @@ func NewTimerLayout(run *timer.Run) *TimerLayout {
 		splitlabels = append(splitlabels, widget.NewLabel(s.String()))
 	}
 
+	// Special case: no run loaded
+	if len(run.Segments) == 1 && run.Segments[0].Name == "" {
+		namelabels = []*widget.Label{}
+		deltalabels = []*widget.Label{}
+		splitlabels = []*widget.Label{}
+	}
+
 	ret := &TimerLayout{
 		&labels{
 			canvas.NewText(run.GameName, color.White),
