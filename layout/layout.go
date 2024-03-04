@@ -131,6 +131,7 @@ func (t *TimerLayout) arrangeContent() fyne.CanvasObject {
 
 func (t *TimerLayout) Show(window fyne.Window) fyne.CanvasObject {
 	window.Canvas().SetOnTypedKey(t.handleKeyInput)
-	t.activateTimer()
+	// TODO: re-enable when this doesn't crash on startup
+	// t.activateTimer()
 	return t.arrangeContent()
 }

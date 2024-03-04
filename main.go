@@ -9,6 +9,9 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	"speedruntimer/layout"
+	"speedruntimer/timing/timer"
 )
 
 func init() {
@@ -24,6 +27,7 @@ func main() {
 	var (
 		app    = app.New()
 		window = app.NewWindow("Timer")
+		run    = new(timer.Run)
 	)
 
 	app.Settings().SetTheme(theme.DefaultTheme())
@@ -33,7 +37,11 @@ func main() {
 	window.SetFixedSize(true)
 	window.Resize(fyne.NewSize(540, 300))
 
-	showLoadPrompt(window)
+	showLoadPrompt(window, run)
+
+	timerLayout := layout.NewTimerLayout(run).Show(window)
+	window.SetContent(timerLayout)
+	window.Resize(fyne.NewSize(window.Content().MinSize().Width, 720))
 
 	window.ShowAndRun()
 }
