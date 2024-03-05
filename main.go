@@ -3,8 +3,11 @@ package main
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 
+	"encoding/json"
+	"io"
 	"os"
 
 	"github.com/rs/zerolog"
@@ -23,6 +26,9 @@ func init() {
 	}
 }
 
+// TODO: implement this
+// var defaultRun = *timer.Run{}
+
 func main() {
 	var (
 		app    = app.New()
@@ -37,11 +43,22 @@ func main() {
 	window.SetFixedSize(true)
 	window.Resize(fyne.NewSize(540, 300))
 
-	showLoadPrompt(window, run)
+	var loadSplitFile = func(f fyne.URIReadCloser, e error) {
+		// Unhandled potential error
+		if f == nil {
+			return
+		}
 
-	timerLayout := layout.NewTimerLayout(run).Show(window)
-	window.SetContent(timerLayout)
-	window.Resize(fyne.NewSize(window.Content().MinSize().Width, 720))
+		filebytes, _ := io.ReadAll(f)  // Unhandled potential error
+		json.Unmarshal(filebytes, run) // Unhandled potential error
+
+		tl := layout.NewTimerLayout(run).Show(window)
+		window.SetContent(tl)
+		window.Resize(fyne.NewSize(window.Content().MinSize().Width, 720))
+	}
+
+	d := dialog.NewFileOpen(loadSplitFile, window)
+	d.Show()
 
 	window.ShowAndRun()
 }
