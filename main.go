@@ -33,7 +33,7 @@ func main() {
 	var (
 		app    = app.New()
 		window = app.NewWindow("Timer")
-		run    = new(timer.Run)
+		run    = &timer.Run{Segments: []*timer.Split{{}}}
 	)
 
 	app.Settings().SetTheme(theme.DefaultTheme())
@@ -46,6 +46,8 @@ func main() {
 	var loadSplitFile = func(f fyne.URIReadCloser, e error) {
 		// Unhandled potential error
 		if f == nil {
+			tl := layout.NewTimerLayout(run).Show(window)
+			window.SetContent(tl)
 			return
 		}
 
