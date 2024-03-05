@@ -33,7 +33,7 @@ func main() {
 	var (
 		app    = app.New()
 		window = app.NewWindow("Timer")
-		run    = &timer.Run{Segments: []*timer.Split{{}}}
+		run    = timer.DefaultRun()
 	)
 
 	app.Settings().SetTheme(theme.DefaultTheme())

@@ -12,3 +12,7 @@ type Run struct {
 	Segments []*Split
 	Attempts int
 }
+
+func DefaultRun() *Run {
+	return &Run{Segments: []*splitter.Split{{}}}
+}
