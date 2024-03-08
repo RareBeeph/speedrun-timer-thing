@@ -13,6 +13,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"speedruntimer/config"
 	"speedruntimer/layout"
 	"speedruntimer/timing/timer"
 )
@@ -48,9 +49,12 @@ func main() {
 			return
 		}
 
+		conf := config.Config{LastSplitFile: f.URI().Path()}
+
 		s, _ := xdg.ConfigFile("speedruntimer/config")
-		newfile, _ := os.Create(s) // Unhandled potential error
-		newfile.Write(([]byte)(f.URI().Path()))
+		newfile, _ := os.Create(s)         // Unhandled potential error
+		confbytes, _ := json.Marshal(conf) // Unhandled potential error
+		newfile.Write(confbytes)
 
 		filebytes, _ := io.ReadAll(f)  // Unhandled potential error
 		json.Unmarshal(filebytes, run) // Unhandled potential error
@@ -60,7 +64,7 @@ func main() {
 		window.Resize(fyne.NewSize(window.Content().MinSize().Width, 720))
 	}
 
-	handleConfig(window, run, loadSplitFile)
+	config.OpenConfigFile(window, run, loadSplitFile)
 
 	window.ShowAndRun()
 }
