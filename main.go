@@ -3,13 +3,13 @@ package main
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 
 	"encoding/json"
 	"io"
 	"os"
 
+	"github.com/adrg/xdg"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -25,9 +25,6 @@ func init() {
 		os.Setenv("FYNE_THEME", "dark")
 	}
 }
-
-// TODO: implement this
-// var defaultRun = *timer.Run{}
 
 func main() {
 	var (
@@ -51,6 +48,10 @@ func main() {
 			return
 		}
 
+		s, _ := xdg.ConfigFile("speedruntimer/config")
+		newfile, _ := os.Create(s) // Unhandled potential error
+		newfile.Write(([]byte)(f.URI().Path()))
+
 		filebytes, _ := io.ReadAll(f)  // Unhandled potential error
 		json.Unmarshal(filebytes, run) // Unhandled potential error
 
@@ -59,8 +60,7 @@ func main() {
 		window.Resize(fyne.NewSize(window.Content().MinSize().Width, 720))
 	}
 
-	d := dialog.NewFileOpen(loadSplitFile, window)
-	d.Show()
+	handleConfig(window, run, loadSplitFile)
 
 	window.ShowAndRun()
 }
