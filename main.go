@@ -42,7 +42,10 @@ func main() {
 	window.SetFixedSize(true)
 	window.Resize(fyne.NewSize(540, 300))
 
-	conf := config.OpenConfigFile()
+	conf, cfgerr := config.OpenConfigFile()
+	if cfgerr != nil {
+		panic(cfgerr)
+	}
 
 	var loadSplitFile = func(f fyne.URIReadCloser, e error) {
 		// Unhandled potential error
@@ -54,9 +57,9 @@ func main() {
 
 		conf.LastSplitFile = f.URI().Path()
 
-		s, _ := xdg.ConfigFile("speedruntimer/config")
-		newfile, _ := os.Create(s)         // Unhandled potential error
-		confbytes, _ := json.Marshal(conf) // Unhandled potential error
+		s, _ := xdg.ConfigFile("speedruntimer/config") // Unhandled potential error
+		newfile, _ := os.Create(s)                     // Unhandled potential error
+		confbytes, _ := json.Marshal(conf)             // Unhandled potential error
 		newfile.Write(confbytes)
 
 		filebytes, _ := io.ReadAll(f)  // Unhandled potential error
@@ -68,7 +71,11 @@ func main() {
 	}
 
 	// TODO: handle these errors; move this out of main
+	sized := false
 	if conf.LastSplitFile == "" {
+		window.Resize(fyne.NewSize(540, 300))
+		sized = true
+
 		dialog.NewFileOpen(loadSplitFile, window).Show()
 	} else {
 		splitfile, splitopenerr := os.Open(conf.LastSplitFile)
@@ -92,7 +99,9 @@ func main() {
 
 	tl := layout.NewTimerLayout(run).Show(window)
 	window.SetContent(tl)
-	window.Resize(fyne.NewSize(window.Content().MinSize().Width, 720))
+	if !sized {
+		window.Resize(fyne.NewSize(window.Content().MinSize().Width, 720))
+	}
 
 	window.ShowAndRun()
 }
