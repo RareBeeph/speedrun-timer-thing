@@ -2,11 +2,11 @@ package config
 
 import (
 	"encoding/json"
-	"io"
 	"log"
 	"os"
 
 	"github.com/adrg/xdg"
+	"github.com/jinzhu/configor"
 )
 
 type Config struct {
@@ -30,23 +30,10 @@ func OpenConfigFile() (*Config, error) {
 		}
 	}
 
-	cfgfile, openerr := os.Open(cfgfilename)
-	if openerr != nil {
-		log.Print("config open error")
-		return nil, openerr
-	}
-
-	cfgfilebytes, cfgreaderr := io.ReadAll(cfgfile)
-	if cfgreaderr != nil {
-		log.Print("config read error")
-		return nil, cfgreaderr
-	}
-
 	conf := &Config{}
-	cfgunmarshalerr := json.Unmarshal(cfgfilebytes, conf)
-	if cfgunmarshalerr != nil {
-		log.Print("config unmarshal error")
-		return nil, cfgunmarshalerr
+	lderr := configor.Load(conf, cfgfilename)
+	if lderr != nil {
+		return nil, lderr
 	}
 
 	return conf, nil

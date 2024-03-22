@@ -15,6 +15,7 @@ import (
 	"os"
 
 	"github.com/adrg/xdg"
+	"github.com/jinzhu/configor"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -78,22 +79,10 @@ func main() {
 
 		dialog.NewFileOpen(loadSplitFile, window).Show()
 	} else {
-		splitfile, splitopenerr := os.Open(conf.LastSplitFile)
-		if splitopenerr != nil {
-			log.Print("split open error")
-			// etc
-		}
-
-		splitfilebytes, splitreaderr := io.ReadAll(splitfile)
-		if splitreaderr != nil {
-			log.Print("split read error")
-			// etc
-		}
-
-		splitunmarshalerr := json.Unmarshal(splitfilebytes, run)
-		if splitunmarshalerr != nil {
-			log.Print("split unmarshal error")
-			// etc
+		err := configor.Load(run, conf.LastSplitFile)
+		if err != nil {
+			log.Print("split load error")
+			log.Print(err.Error())
 		}
 	}
 

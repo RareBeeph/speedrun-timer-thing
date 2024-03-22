@@ -5,12 +5,14 @@ go 1.18
 require (
 	fyne.io/fyne/v2 v2.3.5
 	github.com/adrg/xdg v0.4.0
+	github.com/jinzhu/configor v1.2.2
 	github.com/rs/zerolog v1.30.0
 	github.com/stretchr/testify v1.8.0
 )
 
 require (
 	fyne.io/systray v1.10.1-0.20230602210930-b6a2d6ca2a7b // indirect
+	github.com/BurntSushi/toml v1.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fredbi/uri v0.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
