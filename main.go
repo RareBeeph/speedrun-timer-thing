@@ -42,11 +42,15 @@ func main() {
 	// but we want that size to be saved with the run data and not hardcoded
 	window.SetFixedSize(true)
 	window.Resize(fyne.NewSize(540, 300))
+	window.SetMaster()
 
 	conf, cfgerr := config.OpenConfigFile()
 	if cfgerr != nil {
-		panic(cfgerr)
+		panic(cfgerr) // TODO: error dialogs
 	}
+
+	dialogwindow := app.NewWindow("Dialog")
+	dialogwindow.Resize(fyne.NewSize(540, 300))
 
 	var loadSplitFile = func(f fyne.URIReadCloser, e error) {
 		// Unhandled potential error
@@ -69,28 +73,25 @@ func main() {
 		tl := layout.NewTimerLayout(run).Show(window)
 		window.SetContent(tl)
 		window.Resize(fyne.NewSize(window.Content().MinSize().Width, 720))
+
+		dialogwindow.Hide()
 	}
 
 	// TODO: handle these errors; move this out of main
-	sized := false
 	if conf.LastSplitFile == "" {
-		window.Resize(fyne.NewSize(540, 300))
-		sized = true
-
-		dialog.NewFileOpen(loadSplitFile, window).Show()
+		dialogwindow.Show()
+		dialog.NewFileOpen(loadSplitFile, dialogwindow).Show()
+		window.Resize(fyne.NewSize(320, 720))
 	} else {
 		err := configor.Load(run, conf.LastSplitFile)
 		if err != nil {
 			log.Print("split load error")
 			log.Print(err.Error())
 		}
+		window.Resize(fyne.NewSize(window.Content().MinSize().Width, 720))
 	}
 
 	tl := layout.NewTimerLayout(run).Show(window)
 	window.SetContent(tl)
-	if !sized {
-		window.Resize(fyne.NewSize(window.Content().MinSize().Width, 720))
-	}
-
 	window.ShowAndRun()
 }
