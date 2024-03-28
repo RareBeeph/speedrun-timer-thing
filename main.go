@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"io"
 	"speedruntimer/config"
 	"speedruntimer/layout"
 	"speedruntimer/timing/timer"
@@ -44,16 +43,23 @@ func main() {
 	window.Resize(fyne.NewSize(540, 300))
 	window.SetMaster()
 
-	conf, cfgerr := config.OpenConfigFile()
-	if cfgerr != nil {
-		panic(cfgerr) // TODO: error dialogs
-	}
-
 	dialogwindow := app.NewWindow("Dialog")
 	dialogwindow.Resize(fyne.NewSize(540, 300))
 
+	conf, cfgerr := config.OpenConfigFile()
+	if cfgerr != nil {
+		dialogwindow.Show()
+		dialog.NewError(cfgerr, dialogwindow)
+		// TODO: pause main execution until closed?
+	}
+
 	var loadSplitFile = func(f fyne.URIReadCloser, e error) {
-		// Unhandled potential error
+		if e != nil {
+			dialogwindow.Show()
+			dialog.NewError(e, dialogwindow)
+			// TODO: pause main execution until closed?
+		}
+
 		if f == nil {
 			tl := layout.NewTimerLayout(run).Show(window)
 			window.SetContent(tl)
@@ -67,8 +73,11 @@ func main() {
 		confbytes, _ := json.Marshal(conf)             // Unhandled potential error
 		newfile.Write(confbytes)
 
-		filebytes, _ := io.ReadAll(f)  // Unhandled potential error
-		json.Unmarshal(filebytes, run) // Unhandled potential error
+		e = configor.Load(run, conf.LastSplitFile)
+		if e != nil {
+			log.Print("split load error")
+			log.Print(e.Error()) // TODO: filter out the usual error
+		}
 
 		tl := layout.NewTimerLayout(run).Show(window)
 		window.SetContent(tl)
@@ -77,7 +86,7 @@ func main() {
 		dialogwindow.Hide()
 	}
 
-	// TODO: handle these errors; move this out of main
+	// TODO: move this out of main
 	if conf.LastSplitFile == "" {
 		dialogwindow.Show()
 		dialog.NewFileOpen(loadSplitFile, dialogwindow).Show()
@@ -86,7 +95,7 @@ func main() {
 		err := configor.Load(run, conf.LastSplitFile)
 		if err != nil {
 			log.Print("split load error")
-			log.Print(err.Error())
+			log.Print(err.Error()) // TODO: filter out the usual error
 		}
 		window.Resize(fyne.NewSize(window.Content().MinSize().Width, 720))
 	}
